@@ -6,12 +6,15 @@ import java.util.ArrayList;
 
 public class CfgIfStatementNode extends CfgNode {
 
+    private final ArrayList<CfgNode> nodes = new ArrayList<CfgNode>();
+
+    private final PsiExpression condition;
+
     public CfgIfStatementNode(PsiExpression condition) {
         this.condition = condition;
-        nodes = new ArrayList<CfgNode>();
     }
 
-    public void addOutgoingEdge(CfgNode node) {
+    public void addOutgoingEdgeTo(CfgNode node) {
         nodes.add(node);
     }
 
@@ -23,7 +26,4 @@ public class CfgIfStatementNode extends CfgNode {
         return condition.getText();
     }
 
-    private ArrayList<CfgNode> nodes;
-
-    private final PsiExpression condition;
 }

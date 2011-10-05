@@ -4,60 +4,51 @@ import com.intellij.psi.*;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ControlFlowGraph {
 
-    public ControlFlowGraph() {
-        nodes = new ArrayList<CfgNode>();
+    private final List<CfgNode> nodes = new ArrayList<CfgNode>();
+
+    private List<CfgNode> processIfBranch(PsiStatement psiStatement, List<CfgNode> prevNodes, CfgNode currentNode) {
+        if (psiStatement != null) {
+
+            if (psiStatement instanceof PsiBlockStatement) {
+                return processCodeBlock(prevNodes, ((PsiBlockStatement) psiStatement).getCodeBlock());
+
+            } else if (psiStatement instanceof PsiExpressionStatement) {
+                CfgNode expressionNode = new CfgStatementNode(psiStatement);
+                addNode(expressionNode);
+                currentNode.addOutgoingEdgeTo(expressionNode);
+
+                List<CfgNode> ret = new ArrayList<CfgNode>();
+                ret.add(expressionNode);
+                return ret;
+
+            } else if (psiStatement instanceof PsiEmptyStatement) {
+                List<CfgNode> ret = new ArrayList<CfgNode>();
+                ret.add(currentNode);
+                return ret;
+            }
+        }
+        return new ArrayList<CfgNode>();
     }
 
-    public ArrayList<CfgNode> processIfStatement(ArrayList<CfgNode> prevNodes, PsiIfStatement psiIfStatement) {
-        CfgNode currentNode;
-        currentNode = new CfgIfStatementNode(psiIfStatement.getCondition());
+    private List<CfgNode> processIfStatement(List<CfgNode> prevNodes, PsiIfStatement psiIfStatement) {
+        CfgNode currentNode = new CfgIfStatementNode(psiIfStatement.getCondition());
 
         addNode(currentNode);
         for (CfgNode prevNode : prevNodes) {
-            prevNode.addOutgoingEdge(currentNode);
+            prevNode.addOutgoingEdgeTo(currentNode);
         }
 
         prevNodes = new ArrayList<CfgNode>();
         prevNodes.add(currentNode);
 
-        ArrayList<CfgNode> tailNodes = new ArrayList<CfgNode>();
+        List<CfgNode> tailNodes = new ArrayList<CfgNode>();
 
-        PsiStatement thenStatement = psiIfStatement.getThenBranch();
-        if (thenStatement != null) {
-
-            if (thenStatement instanceof PsiBlockStatement) {
-                tailNodes.addAll(processCodeBlock(prevNodes, ((PsiBlockStatement) thenStatement).getCodeBlock()));
-
-            } else if (thenStatement instanceof PsiExpressionStatement) {
-                CfgNode thenNode = new CfgStatementNode(thenStatement);
-                addNode(thenNode);
-                currentNode.addOutgoingEdge(thenNode);
-                tailNodes.add(thenNode);
-
-            } else if (thenStatement instanceof PsiEmptyStatement) {
-                tailNodes.add(currentNode);
-            }
-        }
-
-        PsiStatement elseStatement = psiIfStatement.getElseBranch();
-        if (elseStatement != null) {
-
-            if (elseStatement instanceof PsiBlockStatement) {
-                tailNodes.addAll(processCodeBlock(prevNodes, ((PsiBlockStatement) elseStatement).getCodeBlock()));
-
-            } else if (elseStatement instanceof PsiExpressionStatement) {
-                CfgNode elseNode = new CfgStatementNode(elseStatement);
-                addNode(elseNode);
-                currentNode.addOutgoingEdge(elseNode);
-                tailNodes.add(elseNode);
-
-            } else if (elseStatement instanceof PsiEmptyStatement) {
-                tailNodes.add(currentNode);
-            }
-        }
+        tailNodes.addAll(processIfBranch(psiIfStatement.getThenBranch(), prevNodes, currentNode));
+        tailNodes.addAll(processIfBranch(psiIfStatement.getElseBranch(), prevNodes, currentNode));
 
         if (tailNodes.isEmpty()) {
             tailNodes.add(currentNode);
@@ -65,7 +56,7 @@ public class ControlFlowGraph {
         return tailNodes;
     }
 
-    public ArrayList<CfgNode> processCodeBlock(ArrayList<CfgNode> prevNodes, PsiCodeBlock psiCodeBlock) {
+    private List<CfgNode> processCodeBlock(List<CfgNode> prevNodes, PsiCodeBlock psiCodeBlock) {
         if (psiCodeBlock == null) {
             return prevNodes;
         }
@@ -81,7 +72,7 @@ public class ControlFlowGraph {
                 addNode(currentNode);
 
                 for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdge(currentNode);
+                    prevNode.addOutgoingEdgeTo(currentNode);
                 }
 
                 return new ArrayList<CfgNode>();
@@ -90,7 +81,7 @@ public class ControlFlowGraph {
                 addNode(currentNode);
 
                 for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdge(currentNode);
+                    prevNode.addOutgoingEdgeTo(currentNode);
                 }
 
                 prevNodes = new ArrayList<CfgNode>();
@@ -101,7 +92,7 @@ public class ControlFlowGraph {
     }
 
     public void addMethod(PsiMethod psiMethod) {
-        ArrayList<CfgNode> prevNodes = new ArrayList<CfgNode>();
+        List<CfgNode> prevNodes = new ArrayList<CfgNode>();
         CfgNode rootNode = new CfgRootNode(psiMethod);
         addNode(rootNode);
         prevNodes.add(rootNode);
@@ -110,7 +101,6 @@ public class ControlFlowGraph {
     }
 
     public void addNode(CfgNode node) {
-        node.setKey(nodes.size());
         nodes.add(node);
     }
 
@@ -142,5 +132,4 @@ public class ControlFlowGraph {
         }
     }
 
-    private final ArrayList<CfgNode> nodes;
 }

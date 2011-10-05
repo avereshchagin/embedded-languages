@@ -4,18 +4,12 @@ import java.util.ArrayList;
 
 public abstract class CfgNode {
 
-    public void setKey(int key) {
-        this.key = key;
-    }
-
     public int getKey() {
-        return key;
+        return System.identityHashCode(this);
     }
 
-    public abstract void addOutgoingEdge(CfgNode node);
+    public abstract void addOutgoingEdgeTo(CfgNode node);
 
     public abstract ArrayList<CfgNode> getOutgoingEdges();
-
-    protected int key;
 
 }

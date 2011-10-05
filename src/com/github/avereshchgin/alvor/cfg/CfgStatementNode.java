@@ -6,6 +6,10 @@ import java.util.ArrayList;
 
 public class CfgStatementNode extends CfgNode {
 
+    private CfgNode next;
+
+    private final PsiStatement psiStatement;
+
     public CfgStatementNode(PsiStatement psiStatement) {
         this.psiStatement = psiStatement;
     }
@@ -15,7 +19,7 @@ public class CfgStatementNode extends CfgNode {
         return psiStatement.getText();
     }
 
-    public void addOutgoingEdge(CfgNode node) {
+    public void addOutgoingEdgeTo(CfgNode node) {
         next = node;
     }
 
@@ -27,7 +31,4 @@ public class CfgStatementNode extends CfgNode {
         return ret;
     }
 
-    private CfgNode next;
-
-    private final PsiStatement psiStatement;
 }

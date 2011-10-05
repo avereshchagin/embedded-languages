@@ -6,6 +6,10 @@ import java.util.ArrayList;
 
 public class CfgRootNode extends CfgNode {
 
+    private CfgNode next;
+
+    private final PsiMethod psiMethod;
+
     public CfgRootNode(PsiMethod psiMethod) {
         this.psiMethod = psiMethod;
     }
@@ -15,7 +19,7 @@ public class CfgRootNode extends CfgNode {
         return psiMethod.getName();
     }
 
-    public void addOutgoingEdge(CfgNode node) {
+    public void addOutgoingEdgeTo(CfgNode node) {
         next = node;
     }
 
@@ -27,7 +31,4 @@ public class CfgRootNode extends CfgNode {
         return ret;
     }
 
-    private CfgNode next;
-
-    private final PsiMethod psiMethod;
 }
