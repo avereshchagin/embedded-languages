@@ -1,6 +1,6 @@
 package com.github.avereshchgin.alvor.actions;
 
-import com.github.avereshchgin.alvor.cfg.ControlFlowGraph;
+import com.github.avereshchgin.alvor.cfg.ControlFlowGraphBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -27,10 +27,10 @@ public class ExampleAction extends AnAction {
             return;
         }
 
-        ControlFlowGraph controlFlowGraph = new ControlFlowGraph();
+        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder();
         for (PsiMethod psiMethod : foo.getAllMethods()) {
-            controlFlowGraph.addMethod(psiMethod);
+            cfgBuilder.addMethod(psiMethod);
         }
-        controlFlowGraph.showGraph();
+        cfgBuilder.showGraph();
     }
 }

@@ -1,7 +1,5 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.intellij.psi.*;
-
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,101 +8,11 @@ public class ControlFlowGraph {
 
     private final List<CfgNode> nodes = new ArrayList<CfgNode>();
 
-    private List<CfgNode> processIfBranch(PsiStatement psiStatement, List<CfgNode> prevNodes, CfgNode currentNode) {
-        if (psiStatement != null) {
-
-            if (psiStatement instanceof PsiBlockStatement) {
-                return processCodeBlock(prevNodes, ((PsiBlockStatement) psiStatement).getCodeBlock());
-
-            } else if (psiStatement instanceof PsiExpressionStatement) {
-                CfgNode expressionNode = new CfgStatementNode(psiStatement);
-                addNode(expressionNode);
-                currentNode.addOutgoingEdgeTo(expressionNode);
-
-                List<CfgNode> ret = new ArrayList<CfgNode>();
-                ret.add(expressionNode);
-                return ret;
-
-            } else if (psiStatement instanceof PsiEmptyStatement) {
-                List<CfgNode> ret = new ArrayList<CfgNode>();
-                ret.add(currentNode);
-                return ret;
-            }
-        }
-        return new ArrayList<CfgNode>();
-    }
-
-    private List<CfgNode> processIfStatement(List<CfgNode> prevNodes, PsiIfStatement psiIfStatement) {
-        CfgNode currentNode = new CfgIfStatementNode(psiIfStatement.getCondition());
-
-        addNode(currentNode);
-        for (CfgNode prevNode : prevNodes) {
-            prevNode.addOutgoingEdgeTo(currentNode);
-        }
-
-        prevNodes = new ArrayList<CfgNode>();
-        prevNodes.add(currentNode);
-
-        List<CfgNode> tailNodes = new ArrayList<CfgNode>();
-
-        tailNodes.addAll(processIfBranch(psiIfStatement.getThenBranch(), prevNodes, currentNode));
-        tailNodes.addAll(processIfBranch(psiIfStatement.getElseBranch(), prevNodes, currentNode));
-
-        if (tailNodes.isEmpty()) {
-            tailNodes.add(currentNode);
-        }
-        return tailNodes;
-    }
-
-    private List<CfgNode> processCodeBlock(List<CfgNode> prevNodes, PsiCodeBlock psiCodeBlock) {
-        if (psiCodeBlock == null) {
-            return prevNodes;
-        }
-
-        CfgNode currentNode;
-        for (PsiStatement psiStatement : psiCodeBlock.getStatements()) {
-
-            if (psiStatement instanceof PsiIfStatement) {
-                prevNodes = processIfStatement(prevNodes, (PsiIfStatement) psiStatement);
-
-            } else if (psiStatement instanceof PsiReturnStatement) {
-                currentNode = new CfgReturnStatementNode((PsiReturnStatement) psiStatement);
-                addNode(currentNode);
-
-                for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdgeTo(currentNode);
-                }
-
-                return new ArrayList<CfgNode>();
-            } else {
-                currentNode = new CfgStatementNode(psiStatement);
-                addNode(currentNode);
-
-                for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdgeTo(currentNode);
-                }
-
-                prevNodes = new ArrayList<CfgNode>();
-                prevNodes.add(currentNode);
-            }
-        }
-        return prevNodes;
-    }
-
-    public void addMethod(PsiMethod psiMethod) {
-        List<CfgNode> prevNodes = new ArrayList<CfgNode>();
-        CfgNode rootNode = new CfgRootNode(psiMethod);
-        addNode(rootNode);
-        prevNodes.add(rootNode);
-
-        processCodeBlock(prevNodes, psiMethod.getBody());
-    }
-
     public void addNode(CfgNode node) {
         nodes.add(node);
     }
 
-    private void printDotGraph(PrintStream out) {
+    public void printDotGraph(PrintStream out) {
         out.println("digraph G {");
         for (CfgNode node : nodes) {
             out.println(node.getKey() + " [label=\"" + node.toString().replaceAll("\"", "\\\\\"") + "\"];");
@@ -115,21 +23,6 @@ public class ControlFlowGraph {
             }
         }
         out.println("}");
-    }
-
-    public void showGraph() {
-        try {
-            Process process = Runtime.getRuntime().exec("/usr/local/bin/dot -Tpng -o/tmp/graph.png");
-            PrintStream out = new PrintStream(process.getOutputStream());
-            printDotGraph(out);
-            out.flush();
-            out.close();
-            process.waitFor();
-
-            Runtime.getRuntime().exec("open /tmp/graph.png");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 }
