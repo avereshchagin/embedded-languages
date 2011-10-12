@@ -1,5 +1,9 @@
 package com.github.avereshchgin.alvor.cfg;
 
+import com.github.avereshchgin.alvor.regex.RegularExpression;
+import com.github.avereshchgin.alvor.regex.SQLExpressionFinder;
+import com.intellij.psi.PsiExpression;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +27,20 @@ public class ControlFlowGraph {
             }
         }
         out.println("}");
+    }
+
+    public void findSQLExpressions() {
+        SQLExpressionFinder expressionFinder = new SQLExpressionFinder();
+        for (CfgNode node : nodes) {
+            PsiExpression expression = node.getSQLExpression(expressionFinder);
+            if (expression != null) {
+                System.out.println("Expression found: " + expression.getText());
+
+                RegularExpression regularExpression = new RegularExpression();
+                regularExpression.buildRegularExpression(expression, node);
+                System.out.println("Regular expression: " + regularExpression);
+            }
+        }
     }
 
 }

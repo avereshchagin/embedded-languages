@@ -1,6 +1,9 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import java.util.ArrayList;
+import com.github.avereshchgin.alvor.regex.SQLExpressionFinder;
+import com.intellij.psi.PsiExpression;
+
+import java.util.List;
 
 public abstract class CfgNode {
 
@@ -10,6 +13,12 @@ public abstract class CfgNode {
 
     public abstract void addOutgoingEdgeTo(CfgNode node);
 
-    public abstract ArrayList<CfgNode> getOutgoingEdges();
+    public abstract List<CfgNode> getOutgoingEdges();
+
+    protected abstract void addIncommingEdgeFrom(CfgNode node);
+
+    public abstract List<CfgNode> getIncommingEdges();
+
+    public abstract PsiExpression getSQLExpression(SQLExpressionFinder finder);
 
 }

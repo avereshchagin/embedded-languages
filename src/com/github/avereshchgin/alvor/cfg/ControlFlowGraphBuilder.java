@@ -34,6 +34,10 @@ public class ControlFlowGraphBuilder {
         }
     }
 
+    public void buildRegularExpression() {
+        cfg.findSQLExpressions();
+    }
+
     private List<CfgNode> processIfBranch(PsiStatement psiStatement, List<CfgNode> prevNodes, CfgNode currentNode) {
         if (psiStatement != null) {
 

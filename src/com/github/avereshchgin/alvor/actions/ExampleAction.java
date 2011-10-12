@@ -31,6 +31,7 @@ public class ExampleAction extends AnAction {
         for (PsiMethod psiMethod : foo.getAllMethods()) {
             cfgBuilder.addMethod(psiMethod);
         }
-        cfgBuilder.showGraph();
+//        cfgBuilder.showGraph();
+        cfgBuilder.buildRegularExpression();
     }
 }
