@@ -1,23 +1,14 @@
 package com.github.avereshchgin.alvor.regex;
 
-import com.intellij.psi.PsiLiteralExpression;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class RegexLiteral extends RegexNode {
 
-    private final PsiLiteralExpression literalExpression;
+    private final String literal;
 
-    public RegexLiteral(PsiLiteralExpression literalExpression) {
-        this.literalExpression = literalExpression;
-    }
-
-    public List<String> getReferences() {
-        return new ArrayList<String>();
+    public RegexLiteral(String literal) {
+        this.literal = literal;
     }
 
     public String toString() {
-        return literalExpression.getText();
+        return "\"" + literal + "\"";
     }
 }

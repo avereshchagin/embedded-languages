@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ControlFlowGraphBuilder {
@@ -34,9 +35,13 @@ public class ControlFlowGraphBuilder {
         }
     }
 
-    public void buildRegularExpression() {
-        cfg.findSQLExpressions();
+    public ControlFlowGraph getControlFlowGraph() {
+        return cfg;
     }
+
+//    public void buildRegularExpression() {
+//        cfg.findSQLExpressions();
+//    }
 
     private List<CfgNode> processIfBranch(PsiStatement psiStatement, List<CfgNode> prevNodes, CfgNode currentNode) {
         if (psiStatement != null) {
@@ -45,7 +50,16 @@ public class ControlFlowGraphBuilder {
                 return processCodeBlock(prevNodes, ((PsiBlockStatement) psiStatement).getCodeBlock());
 
             } else if (psiStatement instanceof PsiExpressionStatement) {
-                CfgNode expressionNode = new CfgStatementNode(psiStatement);
+                CfgNode expressionNode = new CfgExpressionStatementNode((PsiExpressionStatement) psiStatement);
+                cfg.addNode(expressionNode);
+                currentNode.addOutgoingEdgeTo(expressionNode);
+
+                List<CfgNode> ret = new ArrayList<CfgNode>();
+                ret.add(expressionNode);
+                return ret;
+
+            } else if (psiStatement instanceof PsiDeclarationStatement) {
+                CfgNode expressionNode = new CfgDeclarationStatementNode((PsiDeclarationStatement) psiStatement);
                 cfg.addNode(expressionNode);
                 currentNode.addOutgoingEdgeTo(expressionNode);
 
@@ -59,7 +73,7 @@ public class ControlFlowGraphBuilder {
                 return ret;
             }
         }
-        return new ArrayList<CfgNode>();
+        return Collections.emptyList();
     }
 
     private List<CfgNode> processIfStatement(List<CfgNode> prevNodes, PsiIfStatement psiIfStatement) {
@@ -84,19 +98,19 @@ public class ControlFlowGraphBuilder {
         return tailNodes;
     }
 
-    private List<CfgNode> processCodeBlock(List<CfgNode> prevNodes, PsiCodeBlock psiCodeBlock) {
-        if (psiCodeBlock == null) {
+    private List<CfgNode> processCodeBlock(List<CfgNode> prevNodes, PsiCodeBlock codeBlock) {
+        if (codeBlock == null) {
             return prevNodes;
         }
 
         CfgNode currentNode;
-        for (PsiStatement psiStatement : psiCodeBlock.getStatements()) {
+        for (PsiStatement statement : codeBlock.getStatements()) {
 
-            if (psiStatement instanceof PsiIfStatement) {
-                prevNodes = processIfStatement(prevNodes, (PsiIfStatement) psiStatement);
+            if (statement instanceof PsiIfStatement) {
+                prevNodes = processIfStatement(prevNodes, (PsiIfStatement) statement);
 
-            } else if (psiStatement instanceof PsiReturnStatement) {
-                currentNode = new CfgReturnStatementNode((PsiReturnStatement) psiStatement);
+            } else if (statement instanceof PsiReturnStatement) {
+                currentNode = new CfgReturnStatementNode((PsiReturnStatement) statement);
                 cfg.addNode(currentNode);
 
                 for (CfgNode prevNode : prevNodes) {
@@ -104,8 +118,9 @@ public class ControlFlowGraphBuilder {
                 }
 
                 return new ArrayList<CfgNode>();
-            } else {
-                currentNode = new CfgStatementNode(psiStatement);
+
+            } else if (statement instanceof PsiExpressionStatement) {
+                currentNode = new CfgExpressionStatementNode((PsiExpressionStatement) statement);
                 cfg.addNode(currentNode);
 
                 for (CfgNode prevNode : prevNodes) {
@@ -114,6 +129,20 @@ public class ControlFlowGraphBuilder {
 
                 prevNodes = new ArrayList<CfgNode>();
                 prevNodes.add(currentNode);
+
+            } else if (statement instanceof PsiDeclarationStatement) {
+                currentNode = new CfgDeclarationStatementNode((PsiDeclarationStatement) statement);
+                cfg.addNode(currentNode);
+
+                for (CfgNode prevNode : prevNodes) {
+                    prevNode.addOutgoingEdgeTo(currentNode);
+                }
+
+                prevNodes = new ArrayList<CfgNode>();
+                prevNodes.add(currentNode);
+
+            } else {
+                System.out.println("Unknown statement: " + statement);
             }
         }
         return prevNodes;

@@ -1,10 +1,9 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.regex.SQLExpressionFinder;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CfgReturnStatementNode extends CfgNode {
@@ -26,7 +25,7 @@ public class CfgReturnStatementNode extends CfgNode {
     }
 
     public List<CfgNode> getOutgoingEdges() {
-        return new ArrayList<CfgNode>();
+        return Collections.emptyList();
     }
 
     protected void addIncommingEdgeFrom(CfgNode node) {
@@ -35,10 +34,6 @@ public class CfgReturnStatementNode extends CfgNode {
 
     public List<CfgNode> getIncommingEdges() {
         return prev;
-    }
-
-    public PsiExpression getSQLExpression(SQLExpressionFinder finder) {
-        return null;
     }
 
 }

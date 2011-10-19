@@ -1,6 +1,8 @@
 package com.github.avereshchgin.alvor.actions;
 
+import com.github.avereshchgin.alvor.cfg.CfgNode;
 import com.github.avereshchgin.alvor.cfg.ControlFlowGraphBuilder;
+import com.github.avereshchgin.alvor.regex.RegularExpressionBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -32,6 +34,11 @@ public class ExampleAction extends AnAction {
             cfgBuilder.addMethod(psiMethod);
         }
 //        cfgBuilder.showGraph();
-        cfgBuilder.buildRegularExpression();
+
+        for (CfgNode node : cfgBuilder.getControlFlowGraph().getSqlMethodCallNodes()) {
+            System.out.println();
+            System.out.println("Regular expression:");
+            System.out.println(RegularExpressionBuilder.buildRegularException(node).toString());
+        }
     }
 }

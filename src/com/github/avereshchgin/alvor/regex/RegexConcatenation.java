@@ -1,7 +1,5 @@
 package com.github.avereshchgin.alvor.regex;
 
-import java.util.List;
-
 public class RegexConcatenation extends RegexNode {
 
     private final RegexNode leftNode;
@@ -12,13 +10,7 @@ public class RegexConcatenation extends RegexNode {
         this.rightNode = rightNode;
     }
 
-    public List<String> getReferences() {
-        List<String> references = leftNode.getReferences();
-        references.addAll(rightNode.getReferences());
-        return references;
-    }
-
     public String toString() {
-        return "(" + leftNode + rightNode + ")";
+        return "(" + leftNode + "." + rightNode + ")";
     }
 }

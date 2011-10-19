@@ -1,6 +1,5 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.regex.SQLExpressionFinder;
 import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
@@ -12,10 +11,12 @@ public class CfgIfStatementNode extends CfgNode {
 
     private final List<CfgNode> prev = new ArrayList<CfgNode>();
 
-    private final PsiExpression condition;
+//    private final PsiExpression condition;
 
-    public CfgIfStatementNode(PsiExpression condition) {
-        this.condition = condition;
+    private final StringExpression stringExpression;
+
+    public CfgIfStatementNode(PsiExpression expression) {
+        stringExpression = new StringExpression(expression);
     }
 
     public void addOutgoingEdgeTo(CfgNode node) {
@@ -36,11 +37,11 @@ public class CfgIfStatementNode extends CfgNode {
     }
 
     public String toString() {
-        return condition.getText();
+        return stringExpression.toString();
     }
 
-    public PsiExpression getSQLExpression(SQLExpressionFinder finder) {
-        return finder.getSQLExpression(condition);
+    public StringExpression getStringExpression() {
+        return stringExpression;
     }
 
 }

@@ -1,27 +1,25 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.regex.SQLExpressionFinder;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiDeclarationStatement;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CfgStatementNode extends CfgNode {
+public class CfgDeclarationStatementNode extends CfgNode {
 
     private CfgNode next;
 
     private final List<CfgNode> prev = new ArrayList<CfgNode>();
 
-    private final PsiStatement psiStatement;
+    private final StringExpression stringExpression;
 
-    public CfgStatementNode(PsiStatement psiStatement) {
-        this.psiStatement = psiStatement;
+    public CfgDeclarationStatementNode(PsiDeclarationStatement declarationStatement) {
+        stringExpression = new StringExpression(declarationStatement);
     }
 
     @Override
     public String toString() {
-        return psiStatement.getText();
+        return stringExpression.toString();
     }
 
     public void addOutgoingEdgeTo(CfgNode node) {
@@ -45,8 +43,8 @@ public class CfgStatementNode extends CfgNode {
         return prev;
     }
 
-    public PsiExpression getSQLExpression(SQLExpressionFinder finder) {
-        return finder.getSQLExpression(psiStatement);
+    public StringExpression getStringExpression() {
+        return stringExpression;
     }
 
 }
