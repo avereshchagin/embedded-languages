@@ -9,12 +9,11 @@ public class ControlFlowGraph {
 
     private final List<CfgNode> nodes = new ArrayList<CfgNode>();
 
-    private final List<CfgNode> sqlMethodCallNodes = new ArrayList<CfgNode>();
+    private final List<CfgNode> outflushingMethodCallNodes = new ArrayList<CfgNode>();
 
     public void addNode(CfgNode node) {
-        if (node.getHasSqlMethodCall()) {
-            System.out.println("Node " + node + " contains SQL method call");
-            sqlMethodCallNodes.add(node);
+        if (node.isOutflushingMethodCall()) {
+            outflushingMethodCallNodes.add(node);
         }
         nodes.add(node);
     }
@@ -22,17 +21,17 @@ public class ControlFlowGraph {
     public void printDotGraph(PrintStream out) {
         out.println("digraph G {");
         for (CfgNode node : nodes) {
-            out.println(node.getKey() + " [label=\"" + node.toString().replaceAll("\"", "\\\\\"") + "\"];");
+            out.println(System.identityHashCode(node) + " [label=\"" + node.toString().replaceAll("\"", "\\\\\"") + "\"];");
         }
         for (CfgNode srcNode : nodes) {
-            for (CfgNode destNode : srcNode.getOutgoingEdges()) {
-                out.println(srcNode.getKey() + " -> " + destNode.getKey() + ";");
+            for (CfgNode destNode : srcNode.getNextNodes()) {
+                out.println(System.identityHashCode(srcNode) + " -> " + System.identityHashCode(destNode) + ";");
             }
         }
         out.println("}");
     }
 
-    public List<CfgNode> getSqlMethodCallNodes() {
-        return Collections.unmodifiableList(sqlMethodCallNodes);
+    public List<CfgNode> getOutflushingMethodCallNodes() {
+        return Collections.unmodifiableList(outflushingMethodCallNodes);
     }
 }

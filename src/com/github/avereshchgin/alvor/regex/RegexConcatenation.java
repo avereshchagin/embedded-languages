@@ -11,6 +11,6 @@ public class RegexConcatenation extends RegexNode {
     }
 
     public String toString() {
-        return "(" + leftNode + "." + rightNode + ")";
+        return "(" + leftNode + " " + rightNode + ")";
     }
 }

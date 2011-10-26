@@ -1,27 +1,24 @@
 package com.github.avereshchgin.alvor.cfg;
 
+import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+
 import java.util.List;
 
 public abstract class CfgNode {
 
-    public int getKey() {
-        return System.identityHashCode(this);
-    }
+    public abstract void joinNext(CfgNode node);
 
-    public abstract void addOutgoingEdgeTo(CfgNode node);
+    public abstract List<CfgNode> getNextNodes();
 
-    public abstract List<CfgNode> getOutgoingEdges();
+    protected abstract void joinPrevious(CfgNode node);
 
-    protected abstract void addIncommingEdgeFrom(CfgNode node);
+    public abstract List<CfgNode> getPreviousNodes();
 
-    public abstract List<CfgNode> getIncommingEdges();
-
-    public StringExpression getStringExpression() {
-        return null;
-    }
-
-    public boolean getHasSqlMethodCall() {
+    public boolean isOutflushingMethodCall() {
         return false;
     }
 
+    public StrexpRoot getRootForVariable(String name) {
+        return null;
+    }
 }

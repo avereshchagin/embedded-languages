@@ -1,9 +1,10 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.intellij.psi.*;
+import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+import com.github.avereshchgin.alvor.strexp.StringExpressionBuilder;
+import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CfgExpressionStatementNode extends CfgNode {
@@ -12,61 +13,33 @@ public class CfgExpressionStatementNode extends CfgNode {
 
     private final List<CfgNode> prev = new ArrayList<CfgNode>();
 
-    private final StringExpression stringExpression;
+    private final StringExpressionBuilder stringExpressionBuilder;
 
-    private final boolean hasSqlMethodCall;
+    private boolean outflushingMethodCall;
 
-    public CfgExpressionStatementNode(PsiExpressionStatement expressionStatement) {
-        boolean localHasSqlMethodCall = false;
+    public CfgExpressionStatementNode(PsiExpression expression) {
+        stringExpressionBuilder = new StringExpressionBuilder(expression);
+    }
 
-        PsiExpression expression = expressionStatement.getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCallExpression = ((PsiMethodCallExpression) expression);
+    public boolean isOutflushingMethodCall() {
+        return outflushingMethodCall;
+    }
 
-            final String CONNECTION_CLASS_NAME = "java.sql.Connection";
-
-            final String[] SQL_METHODS = {"prepareStatement", "prepareCall", "executeQuery", "executeUpdate"};
-
-            PsiMethod method = methodCallExpression.resolveMethod();
-            if (method != null) {
-                PsiClass containingClass = method.getContainingClass();
-                if (containingClass != null) {
-                    System.out.println("Method: " + containingClass.getQualifiedName() + "." + method.getName());
-                    if (CONNECTION_CLASS_NAME.equals(containingClass.getQualifiedName())) {
-                        if (Arrays.asList(SQL_METHODS).indexOf(method.getName()) != -1) {
-                            System.out.println("SQL method found");
-                            localHasSqlMethodCall = true;
-                        }
-                    }
-                }
-                PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
-                if (expressions.length > 0) {
-                    System.out.println(expressions[0].getText());
-                    stringExpression = new StringExpression(expressions[0]);
-                    System.out.println(stringExpression.toString());
-                } else {
-                    stringExpression = new StringExpression();
-                }
-            } else {
-                stringExpression = new StringExpression();
-            }
-        } else {
-            stringExpression = new StringExpression(expressionStatement);
-        }
-        hasSqlMethodCall = localHasSqlMethodCall;
+    public void setOutflushingMethodCall(boolean outflushingMethodCall) {
+        this.outflushingMethodCall = outflushingMethodCall;
     }
 
     @Override
     public String toString() {
-        return stringExpression.toString();
+        return stringExpressionBuilder.toString();
     }
 
-    public void addOutgoingEdgeTo(CfgNode node) {
+    public void joinNext(CfgNode node) {
         next = node;
-        node.addIncommingEdgeFrom(this);
+        node.joinPrevious(this);
     }
 
-    public List<CfgNode> getOutgoingEdges() {
+    public List<CfgNode> getNextNodes() {
         List<CfgNode> ret = new ArrayList<CfgNode>();
         if (next != null) {
             ret.add(next);
@@ -74,20 +47,24 @@ public class CfgExpressionStatementNode extends CfgNode {
         return ret;
     }
 
-    protected void addIncommingEdgeFrom(CfgNode node) {
+    protected void joinPrevious(CfgNode node) {
         prev.add(node);
     }
 
-    public List<CfgNode> getIncommingEdges() {
+    public List<CfgNode> getPreviousNodes() {
         return prev;
     }
 
-    public StringExpression getStringExpression() {
-        return stringExpression;
-    }
-
-    public boolean getHasSqlMethodCall() {
-        return hasSqlMethodCall;
+    public StrexpRoot getRootForVariable(String name) {
+        if ("".equals(name)) {
+            return stringExpressionBuilder.getRootNode();
+        }
+        for (StrexpRoot variable : stringExpressionBuilder.getModifiedVariables()) {
+            if (name.equals(variable.getVariableName())) {
+                return variable;
+            }
+        }
+        return null;
     }
 
 }

@@ -21,12 +21,12 @@ public class CfgRootNode extends CfgNode {
         return psiMethod.getName();
     }
 
-    public void addOutgoingEdgeTo(CfgNode node) {
+    public void joinNext(CfgNode node) {
         next = node;
-        node.addIncommingEdgeFrom(this);
+        node.joinPrevious(this);
     }
 
-    public List<CfgNode> getOutgoingEdges() {
+    public List<CfgNode> getNextNodes() {
         List<CfgNode> ret = new ArrayList<CfgNode>();
         if (next != null) {
             ret.add(next);
@@ -34,10 +34,10 @@ public class CfgRootNode extends CfgNode {
         return ret;
     }
 
-    protected void addIncommingEdgeFrom(CfgNode node) {
+    protected void joinPrevious(CfgNode node) {
     }
 
-    public List<CfgNode> getIncommingEdges() {
+    public List<CfgNode> getPreviousNodes() {
         return Collections.emptyList();
     }
 

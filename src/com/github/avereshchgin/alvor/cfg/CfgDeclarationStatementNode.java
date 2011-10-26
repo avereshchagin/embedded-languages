@@ -1,5 +1,7 @@
 package com.github.avereshchgin.alvor.cfg;
 
+import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+import com.github.avereshchgin.alvor.strexp.StringExpressionBuilder;
 import com.intellij.psi.PsiDeclarationStatement;
 
 import java.util.ArrayList;
@@ -11,23 +13,23 @@ public class CfgDeclarationStatementNode extends CfgNode {
 
     private final List<CfgNode> prev = new ArrayList<CfgNode>();
 
-    private final StringExpression stringExpression;
+    private final StringExpressionBuilder stringExpressionBuilder;
 
     public CfgDeclarationStatementNode(PsiDeclarationStatement declarationStatement) {
-        stringExpression = new StringExpression(declarationStatement);
+        stringExpressionBuilder = new StringExpressionBuilder(declarationStatement);
     }
 
     @Override
     public String toString() {
-        return stringExpression.toString();
+        return stringExpressionBuilder.toString();
     }
 
-    public void addOutgoingEdgeTo(CfgNode node) {
+    public void joinNext(CfgNode node) {
         next = node;
-        node.addIncommingEdgeFrom(this);
+        node.joinPrevious(this);
     }
 
-    public List<CfgNode> getOutgoingEdges() {
+    public List<CfgNode> getNextNodes() {
         List<CfgNode> ret = new ArrayList<CfgNode>();
         if (next != null) {
             ret.add(next);
@@ -35,16 +37,23 @@ public class CfgDeclarationStatementNode extends CfgNode {
         return ret;
     }
 
-    protected void addIncommingEdgeFrom(CfgNode node) {
+    protected void joinPrevious(CfgNode node) {
         prev.add(node);
     }
 
-    public List<CfgNode> getIncommingEdges() {
+    public List<CfgNode> getPreviousNodes() {
         return prev;
     }
 
-    public StringExpression getStringExpression() {
-        return stringExpression;
+    public StrexpRoot getRootForVariable(String name) {
+        if ("".equals(name)) {
+            return stringExpressionBuilder.getRootNode();
+        }
+        for (StrexpRoot variable : stringExpressionBuilder.getModifiedVariables()) {
+            if (name.equals(variable.getVariableName())) {
+                return variable;
+            }
+        }
+        return null;
     }
-
 }

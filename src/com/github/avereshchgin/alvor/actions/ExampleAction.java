@@ -2,6 +2,7 @@ package com.github.avereshchgin.alvor.actions;
 
 import com.github.avereshchgin.alvor.cfg.CfgNode;
 import com.github.avereshchgin.alvor.cfg.ControlFlowGraphBuilder;
+import com.github.avereshchgin.alvor.cfg.OutflushingMethodsFinder;
 import com.github.avereshchgin.alvor.regex.RegularExpressionBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,6 +23,7 @@ public class ExampleAction extends AnAction {
             return;
         }
 
+        // TODO: rewrite with visitors
         JavaPsiFacade facade = JavaPsiFacadeEx.getInstance(project);
         PsiClass foo = facade.findClass("pac.Foo", GlobalSearchScope.allScope(project));
         if (foo == null) {
@@ -29,16 +31,16 @@ public class ExampleAction extends AnAction {
             return;
         }
 
-        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder();
+        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder(new OutflushingMethodsFinder());
         for (PsiMethod psiMethod : foo.getAllMethods()) {
             cfgBuilder.addMethod(psiMethod);
         }
-//        cfgBuilder.showGraph();
+        cfgBuilder.showGraph();
 
-        for (CfgNode node : cfgBuilder.getControlFlowGraph().getSqlMethodCallNodes()) {
+        for (CfgNode node : cfgBuilder.getControlFlowGraph().getOutflushingMethodCallNodes()) {
             System.out.println();
             System.out.println("Regular expression:");
-            System.out.println(RegularExpressionBuilder.buildRegularException(node).toString());
+            System.out.println(RegularExpressionBuilder.buildRegularExpression(node).toString());
         }
     }
 }

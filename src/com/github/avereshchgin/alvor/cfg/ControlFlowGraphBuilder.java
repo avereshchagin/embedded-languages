@@ -11,13 +11,19 @@ public class ControlFlowGraphBuilder {
 
     private final ControlFlowGraph cfg = new ControlFlowGraph();
 
+    private final OutflushingMethodsFinder finder;
+
+    public ControlFlowGraphBuilder(OutflushingMethodsFinder finder) {
+        this.finder = finder;
+    }
+
     public void addMethod(PsiMethod psiMethod) {
         List<CfgNode> prevNodes = new ArrayList<CfgNode>();
         CfgNode rootNode = new CfgRootNode(psiMethod);
         cfg.addNode(rootNode);
         prevNodes.add(rootNode);
 
-        processCodeBlock(prevNodes, psiMethod.getBody());
+        new MyJavaElementVisitor(prevNodes, psiMethod.getBody());
     }
 
     public void showGraph() {
@@ -39,113 +45,141 @@ public class ControlFlowGraphBuilder {
         return cfg;
     }
 
-//    public void buildRegularExpression() {
-//        cfg.findSQLExpressions();
-//    }
+    private void log(String message) {
+        System.out.println(message);
+    }
 
-    private List<CfgNode> processIfBranch(PsiStatement psiStatement, List<CfgNode> prevNodes, CfgNode currentNode) {
-        if (psiStatement != null) {
+    private class MyJavaElementVisitor extends JavaElementVisitor {
 
-            if (psiStatement instanceof PsiBlockStatement) {
-                return processCodeBlock(prevNodes, ((PsiBlockStatement) psiStatement).getCodeBlock());
+        private final List<CfgNode> prevNodes;
 
-            } else if (psiStatement instanceof PsiExpressionStatement) {
-                CfgNode expressionNode = new CfgExpressionStatementNode((PsiExpressionStatement) psiStatement);
-                cfg.addNode(expressionNode);
-                currentNode.addOutgoingEdgeTo(expressionNode);
-
-                List<CfgNode> ret = new ArrayList<CfgNode>();
-                ret.add(expressionNode);
-                return ret;
-
-            } else if (psiStatement instanceof PsiDeclarationStatement) {
-                CfgNode expressionNode = new CfgDeclarationStatementNode((PsiDeclarationStatement) psiStatement);
-                cfg.addNode(expressionNode);
-                currentNode.addOutgoingEdgeTo(expressionNode);
-
-                List<CfgNode> ret = new ArrayList<CfgNode>();
-                ret.add(expressionNode);
-                return ret;
-
-            } else if (psiStatement instanceof PsiEmptyStatement) {
-                List<CfgNode> ret = new ArrayList<CfgNode>();
-                ret.add(currentNode);
-                return ret;
+        public MyJavaElementVisitor(List<CfgNode> prevNodes, PsiCodeBlock codeBlock) {
+            this.prevNodes = new ArrayList<CfgNode>(prevNodes);
+            if (codeBlock != null) {
+                for (PsiStatement statement : codeBlock.getStatements()) {
+                    statement.accept(this);
+                }
             }
         }
-        return Collections.emptyList();
-    }
 
-    private List<CfgNode> processIfStatement(List<CfgNode> prevNodes, PsiIfStatement psiIfStatement) {
-        CfgNode currentNode = new CfgIfStatementNode(psiIfStatement.getCondition());
-
-        cfg.addNode(currentNode);
-        for (CfgNode prevNode : prevNodes) {
-            prevNode.addOutgoingEdgeTo(currentNode);
-        }
-
-        prevNodes = new ArrayList<CfgNode>();
-        prevNodes.add(currentNode);
-
-        List<CfgNode> tailNodes = new ArrayList<CfgNode>();
-
-        tailNodes.addAll(processIfBranch(psiIfStatement.getThenBranch(), prevNodes, currentNode));
-        tailNodes.addAll(processIfBranch(psiIfStatement.getElseBranch(), prevNodes, currentNode));
-
-        if (tailNodes.isEmpty()) {
-            tailNodes.add(currentNode);
-        }
-        return tailNodes;
-    }
-
-    private List<CfgNode> processCodeBlock(List<CfgNode> prevNodes, PsiCodeBlock codeBlock) {
-        if (codeBlock == null) {
-            return prevNodes;
-        }
-
-        CfgNode currentNode;
-        for (PsiStatement statement : codeBlock.getStatements()) {
-
-            if (statement instanceof PsiIfStatement) {
-                prevNodes = processIfStatement(prevNodes, (PsiIfStatement) statement);
-
-            } else if (statement instanceof PsiReturnStatement) {
-                currentNode = new CfgReturnStatementNode((PsiReturnStatement) statement);
-                cfg.addNode(currentNode);
-
-                for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdgeTo(currentNode);
-                }
-
-                return new ArrayList<CfgNode>();
-
-            } else if (statement instanceof PsiExpressionStatement) {
-                currentNode = new CfgExpressionStatementNode((PsiExpressionStatement) statement);
-                cfg.addNode(currentNode);
-
-                for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdgeTo(currentNode);
-                }
-
-                prevNodes = new ArrayList<CfgNode>();
-                prevNodes.add(currentNode);
-
-            } else if (statement instanceof PsiDeclarationStatement) {
-                currentNode = new CfgDeclarationStatementNode((PsiDeclarationStatement) statement);
-                cfg.addNode(currentNode);
-
-                for (CfgNode prevNode : prevNodes) {
-                    prevNode.addOutgoingEdgeTo(currentNode);
-                }
-
-                prevNodes = new ArrayList<CfgNode>();
-                prevNodes.add(currentNode);
-
-            } else {
-                System.out.println("Unknown statement: " + statement);
+        public MyJavaElementVisitor(List<CfgNode> prevNodes, PsiStatement statement) {
+            this.prevNodes = new ArrayList<CfgNode>(prevNodes);
+            if (statement != null) {
+                statement.accept(this);
             }
         }
-        return prevNodes;
-    }
 
+        public List<CfgNode> getPrevNodes() {
+            return Collections.unmodifiableList(prevNodes);
+        }
+
+        @Override
+        public void visitBlockStatement(PsiBlockStatement statement) {
+            log("Block statement");
+            for (PsiStatement innerStatement : statement.getCodeBlock().getStatements()) {
+                innerStatement.accept(this);
+            }
+        }
+
+        @Override
+        public void visitEmptyStatement(PsiEmptyStatement statement) {
+            log("Empty statement");
+        }
+
+        @Override
+        public void visitReturnStatement(PsiReturnStatement statement) {
+            log("Return statement");
+            CfgNode currentNode = new CfgReturnStatement();
+            cfg.addNode(currentNode);
+            for (CfgNode prevNode : prevNodes) {
+                prevNode.joinNext(currentNode);
+            }
+            prevNodes.clear();
+        }
+
+        @Override
+        public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            log("Declaration statement");
+            CfgNode currentNode = new CfgDeclarationStatementNode(statement);
+            cfg.addNode(currentNode);
+            for (CfgNode prevNode : prevNodes) {
+                prevNode.joinNext(currentNode);
+            }
+            prevNodes.clear();
+            prevNodes.add(currentNode);
+        }
+
+        @Override
+        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+            log("Do-while statement");
+        }
+
+        @Override
+        public void visitExpressionStatement(PsiExpressionStatement statement) {
+            log("Expression statement");
+            statement.getExpression().accept(new JavaElementVisitor() {
+                @Override
+                public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+                    PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+                    if (expressions.length > 0) {
+                        // TODO: check if expression has String type
+                        CfgExpressionStatementNode currentNode = new CfgExpressionStatementNode(expressions[0]);
+                        currentNode.setOutflushingMethodCall(finder.isOutflushingMethod(expression));
+                        cfg.addNode(currentNode);
+                        for (CfgNode prevNode : prevNodes) {
+                            prevNode.joinNext(currentNode);
+                        }
+                        prevNodes.clear();
+                        prevNodes.add(currentNode);
+                    }
+                }
+
+                @Override
+                public void visitExpression(PsiExpression expression) {
+                    CfgExpressionStatementNode currentNode = new CfgExpressionStatementNode(expression);
+                    cfg.addNode(currentNode);
+                    for (CfgNode prevNode : prevNodes) {
+                        prevNode.joinNext(currentNode);
+                    }
+                    prevNodes.clear();
+                    prevNodes.add(currentNode);
+                }
+            });
+        }
+
+        @Override
+        public void visitForStatement(PsiForStatement statement) {
+            log("For statement");
+        }
+
+        @Override
+        public void visitForeachStatement(PsiForeachStatement statement) {
+            log("Foreach statement");
+        }
+
+        @Override
+        public void visitIfStatement(PsiIfStatement statement) {
+            log("If statement");
+            CfgNode currentNode = new CfgIfStatementNode(statement.getCondition());
+            cfg.addNode(currentNode);
+            for (CfgNode prevNode : prevNodes) {
+                prevNode.joinNext(currentNode);
+            }
+            List<CfgNode> conditionNode = new ArrayList<CfgNode>();
+            conditionNode.add(currentNode);
+            prevNodes.clear();
+            prevNodes.addAll(new MyJavaElementVisitor(conditionNode, statement.getThenBranch()).getPrevNodes());
+            prevNodes.addAll(new MyJavaElementVisitor(conditionNode, statement.getElseBranch()).getPrevNodes());
+        }
+
+        @Override
+        public void visitWhileStatement(PsiWhileStatement statement) {
+            log("While statement");
+        }
+
+        @Override
+        public void visitStatement(PsiStatement statement) {
+            log("Unknown statement: " + statement);
+        }
+    }
 }
