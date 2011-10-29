@@ -1,13 +1,13 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+import com.github.avereshchgin.alvor.strexp.StrexpAssignment;
 import com.github.avereshchgin.alvor.strexp.StringExpressionBuilder;
-import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CfgDeclarationStatementNode extends CfgNode {
+public class CfgExpressionStatement extends CfgNode {
 
     private CfgNode next;
 
@@ -15,8 +15,18 @@ public class CfgDeclarationStatementNode extends CfgNode {
 
     private final StringExpressionBuilder stringExpressionBuilder;
 
-    public CfgDeclarationStatementNode(PsiDeclarationStatement declarationStatement) {
-        stringExpressionBuilder = new StringExpressionBuilder(declarationStatement);
+    private boolean verificationRequired;
+
+    public CfgExpressionStatement(PsiExpression expression) {
+        stringExpressionBuilder = new StringExpressionBuilder(expression);
+    }
+
+    public boolean isVerificationRequired() {
+        return verificationRequired;
+    }
+
+    public void setVerificationRequired(boolean verificationRequired) {
+        this.verificationRequired = verificationRequired;
     }
 
     @Override
@@ -24,9 +34,9 @@ public class CfgDeclarationStatementNode extends CfgNode {
         return stringExpressionBuilder.toString();
     }
 
-    public void joinNext(CfgNode node) {
+    public void connectNext(CfgNode node) {
         next = node;
-        node.joinPrevious(this);
+        node.connectPrevious(this);
     }
 
     public List<CfgNode> getNextNodes() {
@@ -37,7 +47,7 @@ public class CfgDeclarationStatementNode extends CfgNode {
         return ret;
     }
 
-    protected void joinPrevious(CfgNode node) {
+    protected void connectPrevious(CfgNode node) {
         prev.add(node);
     }
 
@@ -45,15 +55,16 @@ public class CfgDeclarationStatementNode extends CfgNode {
         return prev;
     }
 
-    public StrexpRoot getRootForVariable(String name) {
+    public StrexpAssignment getRootForVariable(String name) {
         if ("".equals(name)) {
-            return stringExpressionBuilder.getRootNode();
+            return stringExpressionBuilder.getAssignmentNode();
         }
-        for (StrexpRoot variable : stringExpressionBuilder.getModifiedVariables()) {
+        for (StrexpAssignment variable : stringExpressionBuilder.getModifiedVariables()) {
             if (name.equals(variable.getVariableName())) {
                 return variable;
             }
         }
         return null;
     }
+
 }

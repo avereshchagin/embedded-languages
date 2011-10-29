@@ -14,8 +14,8 @@ public class StringExpressionVisitor<E> {
         return visitAnyNode(variable);
     }
 
-    public E visitRoot(StrexpRoot root) {
-        return visitAnyNode(root);
+    public E visitRoot(StrexpAssignment assignment) {
+        return visitAnyNode(assignment);
     }
 
     public E visitAnyNode(StrexpNode node) {

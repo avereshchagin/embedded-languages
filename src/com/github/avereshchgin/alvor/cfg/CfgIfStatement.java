@@ -1,13 +1,13 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+import com.github.avereshchgin.alvor.strexp.StrexpAssignment;
 import com.github.avereshchgin.alvor.strexp.StringExpressionBuilder;
 import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CfgIfStatementNode extends CfgNode {
+public class CfgIfStatement extends CfgNode {
 
     private final List<CfgNode> nodes = new ArrayList<CfgNode>();
 
@@ -15,20 +15,20 @@ public class CfgIfStatementNode extends CfgNode {
 
     private final StringExpressionBuilder stringExpressionBuilder;
 
-    public CfgIfStatementNode(PsiExpression expression) {
+    public CfgIfStatement(PsiExpression expression) {
         stringExpressionBuilder = new StringExpressionBuilder(expression);
     }
 
-    public void joinNext(CfgNode node) {
+    public void connectNext(CfgNode node) {
         nodes.add(node);
-        node.joinPrevious(this);
+        node.connectPrevious(this);
     }
 
     public List<CfgNode> getNextNodes() {
         return nodes;
     }
 
-    protected void joinPrevious(CfgNode node) {
+    protected void connectPrevious(CfgNode node) {
         prev.add(node);
     }
 
@@ -40,11 +40,11 @@ public class CfgIfStatementNode extends CfgNode {
         return stringExpressionBuilder.toString();
     }
 
-    public StrexpRoot getRootForVariable(String name) {
+    public StrexpAssignment getRootForVariable(String name) {
         if ("".equals(name)) {
-            return stringExpressionBuilder.getRootNode();
+            return stringExpressionBuilder.getAssignmentNode();
         }
-        for (StrexpRoot variable : stringExpressionBuilder.getModifiedVariables()) {
+        for (StrexpAssignment variable : stringExpressionBuilder.getModifiedVariables()) {
             if (name.equals(variable.getVariableName())) {
                 return variable;
             }

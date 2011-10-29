@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StrexpRoot implements StrexpNode {
+public class StrexpAssignment implements StrexpNode {
 
     private final List<StrexpNode> childNodes = new ArrayList<StrexpNode>();
 

@@ -1,24 +1,24 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.strexp.StrexpRoot;
+import com.github.avereshchgin.alvor.strexp.StrexpAssignment;
 
 import java.util.List;
 
 public abstract class CfgNode {
 
-    public abstract void joinNext(CfgNode node);
+    public abstract void connectNext(CfgNode node);
 
     public abstract List<CfgNode> getNextNodes();
 
-    protected abstract void joinPrevious(CfgNode node);
+    protected abstract void connectPrevious(CfgNode node);
 
     public abstract List<CfgNode> getPreviousNodes();
 
-    public boolean isOutflushingMethodCall() {
+    public boolean isVerificationRequired() {
         return false;
     }
 
-    public StrexpRoot getRootForVariable(String name) {
+    public StrexpAssignment getRootForVariable(String name) {
         return null;
     }
 }

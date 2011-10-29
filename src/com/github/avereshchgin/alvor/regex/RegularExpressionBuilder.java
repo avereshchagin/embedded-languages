@@ -41,9 +41,9 @@ public class RegularExpressionBuilder {
             }
 
             @Override
-            public RegexNode visitRoot(StrexpRoot root) {
-                log("Root: " + root);
-                List<StrexpNode> childNodes = root.getChildNodes();
+            public RegexNode visitRoot(StrexpAssignment assignment) {
+                log("Root: " + assignment);
+                List<StrexpNode> childNodes = assignment.getChildNodes();
                 if (childNodes.size() > 0) {
                     return processStrexpNode(childNodes.get(0), startStatement);
                 } else {
@@ -60,12 +60,12 @@ public class RegularExpressionBuilder {
     }
 
     public static RegexNode processLinearNode(String variable, CfgNode statement) {
-        StrexpRoot variableRoot;
+        StrexpAssignment variableAssignment;
         log("currentRegex statement: " + statement);
-        if ((variableRoot = statement.getRootForVariable(variable)) == null) {
+        if ((variableAssignment = statement.getRootForVariable(variable)) == null) {
             return processBranchingNode(variable, statement);
         }
-        return processStrexpNode(variableRoot, statement);
+        return processStrexpNode(variableAssignment, statement);
     }
 
     public static RegexNode processBranchingNode(String variable, CfgNode startStatement) {

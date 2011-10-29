@@ -12,14 +12,14 @@ public class CfgReturnStatement extends CfgNode {
         return "return";
     }
 
-    public void joinNext(CfgNode node) {
+    public void connectNext(CfgNode node) {
     }
 
     public List<CfgNode> getNextNodes() {
         return Collections.emptyList();
     }
 
-    protected void joinPrevious(CfgNode node) {
+    protected void connectPrevious(CfgNode node) {
         prev.add(node);
     }
 

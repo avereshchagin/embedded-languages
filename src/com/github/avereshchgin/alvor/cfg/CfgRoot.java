@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CfgRootNode extends CfgNode {
+public class CfgRoot extends CfgNode {
 
     private CfgNode next;
 
     private final PsiMethod psiMethod;
 
-    public CfgRootNode(PsiMethod psiMethod) {
+    public CfgRoot(PsiMethod psiMethod) {
         this.psiMethod = psiMethod;
     }
 
@@ -21,9 +21,9 @@ public class CfgRootNode extends CfgNode {
         return psiMethod.getName();
     }
 
-    public void joinNext(CfgNode node) {
+    public void connectNext(CfgNode node) {
         next = node;
-        node.joinPrevious(this);
+        node.connectPrevious(this);
     }
 
     public List<CfgNode> getNextNodes() {
@@ -34,7 +34,7 @@ public class CfgRootNode extends CfgNode {
         return ret;
     }
 
-    protected void joinPrevious(CfgNode node) {
+    protected void connectPrevious(CfgNode node) {
     }
 
     public List<CfgNode> getPreviousNodes() {

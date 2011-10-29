@@ -8,16 +8,13 @@ import java.util.List;
 
 public class StringExpressionBuilder {
 
-    private final StrexpRoot rootNode = new StrexpRoot();
+    private final StrexpAssignment assignmentNode = new StrexpAssignment();
 
-    private final List<StrexpRoot> modifiedVariables = new ArrayList<StrexpRoot>();
-
-    public StringExpressionBuilder() {
-    }
+    private final List<StrexpAssignment> modifiedVariables = new ArrayList<StrexpAssignment>();
 
     public StringExpressionBuilder(PsiExpression expression) {
         log("StringExpressionBuilder");
-        processExpression(expression, rootNode);
+        processExpression(expression, assignmentNode);
         log(toString());
         log("");
     }
@@ -30,11 +27,11 @@ public class StringExpressionBuilder {
                 public void visitLocalVariable(PsiLocalVariable variable) {
                     PsiType type = variable.getType();
                     if ("java.lang.String".equals(type.getCanonicalText())) {
-                        StrexpRoot variableRoot = new StrexpRoot();
-                        variableRoot.setVariableName(variable.getName());
-                        modifiedVariables.add(variableRoot);
-                        rootNode.joinNode(variableRoot);
-                        processExpression(variable.getInitializer(), variableRoot);
+                        StrexpAssignment variableAssignment = new StrexpAssignment();
+                        variableAssignment.setVariableName(variable.getName());
+                        modifiedVariables.add(variableAssignment);
+                        assignmentNode.joinNode(variableAssignment);
+                        processExpression(variable.getInitializer(), variableAssignment);
                     } else {
                         log("Unknown type: " + type.getCanonicalText());
                     }
@@ -75,10 +72,10 @@ public class StringExpressionBuilder {
     }
 
     private void processAssignmentExpression(final PsiAssignmentExpression assignmentExpression, final StrexpNode parentNode) {
-        final StrexpRoot variableRoot = new StrexpRoot();
-        parentNode.joinNode(variableRoot);
+        final StrexpAssignment variableAssignment = new StrexpAssignment();
+        parentNode.joinNode(variableAssignment);
         final StrexpNode joinedNode = new StrexpConcatenation();
-        variableRoot.joinNode(joinedNode);
+        variableAssignment.joinNode(joinedNode);
 
         PsiExpression leftExpression = assignmentExpression.getLExpression();
         leftExpression.accept(new JavaElementVisitor() {
@@ -92,8 +89,8 @@ public class StringExpressionBuilder {
                             PsiType type = variable.getType();
                             if ("java.lang.String".equals(type.getCanonicalText())) {
                                 log("Assignment to local variable: " + variable.getName());
-                                variableRoot.setVariableName(variable.getName());
-                                modifiedVariables.add(variableRoot);
+                                variableAssignment.setVariableName(variable.getName());
+                                modifiedVariables.add(variableAssignment);
                                 if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
                                     joinedNode.joinNode(new StrexpVariable(variable.getName()));
                                 }
@@ -192,11 +189,11 @@ public class StringExpressionBuilder {
         });
     }
 
-    public StrexpRoot getRootNode() {
-        return rootNode;
+    public StrexpAssignment getAssignmentNode() {
+        return assignmentNode;
     }
 
-    public List<StrexpRoot> getModifiedVariables() {
+    public List<StrexpAssignment> getModifiedVariables() {
         return Collections.unmodifiableList(modifiedVariables);
     }
 
@@ -205,10 +202,11 @@ public class StringExpressionBuilder {
     }
 
     public String toString() {
-        String result = "";
-        for (StrexpRoot variable : modifiedVariables) {
-            result += variable.toString() + ";";
+        StringBuilder result = new StringBuilder();
+        for (StrexpAssignment variable : modifiedVariables) {
+            result.append(variable.toString());
+            result.append(";");
         }
-        return result;
+        return result.toString();
     }
 }

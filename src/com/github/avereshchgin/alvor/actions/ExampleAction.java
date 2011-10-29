@@ -2,8 +2,8 @@ package com.github.avereshchgin.alvor.actions;
 
 import com.github.avereshchgin.alvor.cfg.CfgNode;
 import com.github.avereshchgin.alvor.cfg.ControlFlowGraphBuilder;
-import com.github.avereshchgin.alvor.cfg.OutflushingMethodsFinder;
 import com.github.avereshchgin.alvor.regex.RegularExpressionBuilder;
+import com.github.avereshchgin.alvor.verification.JDBCMethodsFinder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ public class ExampleAction extends AnAction {
             return;
         }
 
-        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder(new OutflushingMethodsFinder());
+        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder(new JDBCMethodsFinder());
         for (PsiMethod psiMethod : foo.getAllMethods()) {
             cfgBuilder.addMethod(psiMethod);
         }
