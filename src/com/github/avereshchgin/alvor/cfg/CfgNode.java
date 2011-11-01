@@ -1,6 +1,8 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.strexp.StrexpAssignment;
+import com.github.avereshchgin.alvor.regex.RegexAssignment;
+import com.github.avereshchgin.alvor.regex.RegexExpression;
+import com.github.avereshchgin.alvor.regex.RegexVariable;
 
 import java.util.List;
 
@@ -18,7 +20,11 @@ public abstract class CfgNode {
         return false;
     }
 
-    public StrexpAssignment getRootForVariable(String name) {
+    public RegexExpression getRegexExpression() {
+        return null;
+    }
+
+    public RegexAssignment getAssignment(RegexVariable variable) {
         return null;
     }
 }

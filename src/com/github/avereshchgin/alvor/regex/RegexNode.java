@@ -1,5 +1,8 @@
 package com.github.avereshchgin.alvor.regex;
 
-public abstract class RegexNode {
+public interface RegexNode {
 
+    public void connectNode(RegexNode node);
+
+    public <E> E accept(RegularExpressionVisitor<E> visitor);
 }

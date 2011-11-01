@@ -1,92 +1,129 @@
 package com.github.avereshchgin.alvor.regex;
 
 import com.github.avereshchgin.alvor.cfg.CfgNode;
-import com.github.avereshchgin.alvor.strexp.*;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class RegularExpressionBuilder {
 
-    public static RegexNode processStrexpNode(StrexpNode node, final CfgNode startStatement) {
-        log("processStrexpNode");
-        return node.accept(new StringExpressionVisitor<RegexNode>() {
+    public static RegexNode processRegexNode(final RegexNode node, final CfgNode startStatement) {
+        log("processRegexNode");
+        return node.accept(new RegularExpressionVisitor<RegexNode>() {
+
             @Override
-            public RegexNode visitConcatenation(StrexpConcatenation concatenation) {
+            public RegexNode visitConcatenation(RegexConcatenation concatenation) {
                 log("Concatenation: " + concatenation);
-                List<StrexpNode> childNodes = concatenation.getChildNodes();
-                if (childNodes.size() == 0) {
-                    return new RegexEmpty();
+                List<RegexNode> childNodes = concatenation.getChildNodes();
+                Iterator<RegexNode> iterator = childNodes.iterator();
+                if (iterator.hasNext()) {
+                    RegexNode currentNode = processRegexNode(iterator.next(), startStatement);
+                    while (iterator.hasNext()) {
+                        // TODO: rewrite as .connectNode
+                        currentNode = new RegexConcatenation(currentNode, processRegexNode(iterator.next(), startStatement));
+                    }
+                    return currentNode;
                 }
-                if (childNodes.size() == 1) {
-                    return processStrexpNode(childNodes.get(0), startStatement);
-                }
-                RegexNode currentRegex = new RegexConcatenation(processStrexpNode(childNodes.get(0), startStatement),
-                        processStrexpNode(childNodes.get(1), startStatement));
-                for (int i = 2; i < childNodes.size(); i++) {
-                    currentRegex = new RegexConcatenation(currentRegex, processStrexpNode(childNodes.get(i), startStatement));
-                }
-                return currentRegex;
+                return new RegexEmpty();
             }
 
             @Override
-            public RegexNode visitLiteral(StrexpLiteral literal) {
+            public RegexNode visitLiteral(RegexLiteral literal) {
                 log("Literal: " + literal);
-                return new RegexLiteral(literal.getLiteral());
+                return literal;
             }
 
             @Override
-            public RegexNode visitVariable(StrexpVariable variable) {
+            public RegexNode visitVariable(RegexVariable variable) {
                 log("Variable: " + variable);
-                return processBranchingNode(variable.getName(), startStatement);
+                return fork(startStatement.getPreviousNodes(), variable);
             }
 
             @Override
-            public RegexNode visitRoot(StrexpAssignment assignment) {
-                log("Root: " + assignment);
-                List<StrexpNode> childNodes = assignment.getChildNodes();
-                if (childNodes.size() > 0) {
-                    return processStrexpNode(childNodes.get(0), startStatement);
-                } else {
-                    return new RegexEmpty();
+            public RegexNode visitAssignment(RegexAssignment assignment) {
+                log("Assignment: " + assignment);
+                return processRegexNode(assignment.getChildNode(), startStatement);
+            }
+
+            @Override
+            public RegexNode visitAlternation(RegexAlternation alternation) {
+                log("Alternation: " + alternation);
+                List<RegexNode> childNodes = alternation.getChildNodes();
+                Iterator<RegexNode> iterator = childNodes.iterator();
+                if (iterator.hasNext()) {
+                    RegexNode currentNode = processRegexNode(iterator.next(), startStatement);
+                    while (iterator.hasNext()) {
+                        // TODO: rewrite as .connectNode
+                        currentNode = new RegexAlternation(currentNode, processRegexNode(iterator.next(), startStatement));
+                    }
+                    return currentNode;
                 }
+                return new RegexEmpty();
             }
 
             @Override
-            public RegexNode visitAnyNode(StrexpNode node) {
-                log("Any node: " + node);
+            public RegexNode visitEmpty(RegexEmpty empty) {
+                return empty;
+            }
+
+            @Override
+            public RegexNode visitRange(RegexRange range) {
+                return range;
+            }
+
+            @Override
+            public RegexNode visitExpression(RegexExpression expression) {
+                log("Expression: " + expression);
+                ListIterator<RegexNode> iterator = expression.getChildNodes().listIterator(expression.getChildNodes().size());
+                if (iterator.hasPrevious()) {
+                    return processRegexNode(iterator.previous(), startStatement);
+                }
+                return new RegexEmpty();
+            }
+
+            @Override
+            public RegexNode visitStar(RegexStar star) {
+                return star;
+            }
+
+            @Override
+            public RegexNode visitPlus(RegexPlus plus) {
+                return plus;
+            }
+
+            @Override
+            public RegexNode visitAnyNode(RegexNode node) {
+                log("Unsupported node: " + node);
                 return new RegexEmpty();
             }
         });
     }
 
-    public static RegexNode processLinearNode(String variable, CfgNode statement) {
-        StrexpAssignment variableAssignment;
-        log("currentRegex statement: " + statement);
-        if ((variableAssignment = statement.getRootForVariable(variable)) == null) {
-            return processBranchingNode(variable, statement);
+    public static RegexNode processStatement(CfgNode statement, RegexVariable variable) {
+        log("Process statement: " + statement);
+        RegexAssignment assignment = statement.getAssignment(variable);
+        if (assignment != null) {
+            return processRegexNode(assignment, statement);
         }
-        return processStrexpNode(variableAssignment, statement);
+        return fork(statement.getPreviousNodes(), variable);
     }
 
-    public static RegexNode processBranchingNode(String variable, CfgNode startStatement) {
-        log("processBranchingNode");
-        List<CfgNode> previousStatements = startStatement.getPreviousNodes();
-        if (previousStatements.size() == 0) {
-            return new RegexEmpty();
-        } else if (previousStatements.size() == 1) {
-            return processLinearNode(variable, previousStatements.get(0));
-        } else {
-            RegexNode currentRegex = new RegexAlternation(processLinearNode(variable, previousStatements.get(0)),
-                    processLinearNode(variable, previousStatements.get(1)));
-            for (int i = 2; i < previousStatements.size(); i++) {
-                currentRegex = new RegexConcatenation(currentRegex, processLinearNode(variable, previousStatements.get(i)));
+    public static RegexNode fork(List<CfgNode> previousStatements, RegexVariable variable) {
+        log("Fork");
+        RegexNode currentRegex = new RegexEmpty();
+        Iterator<CfgNode> iterator = previousStatements.iterator();
+        if (iterator.hasNext()) {
+            currentRegex = processStatement(iterator.next(), variable);
+            while (iterator.hasNext()) {
+                currentRegex = new RegexAlternation(currentRegex, processStatement(iterator.next(), variable));
             }
-            return currentRegex;
         }
+        return currentRegex;
     }
 
     public static RegexNode buildRegularExpression(CfgNode statement) {
-        return processStrexpNode(statement.getRootForVariable(""), statement);
+        return processRegexNode(statement.getRegexExpression(), statement);
     }
 
     public static void log(String message) {

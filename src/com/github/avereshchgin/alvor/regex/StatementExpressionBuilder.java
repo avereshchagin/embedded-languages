@@ -1,4 +1,4 @@
-package com.github.avereshchgin.alvor.strexp;
+package com.github.avereshchgin.alvor.regex;
 
 import com.intellij.psi.*;
 
@@ -6,20 +6,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StringExpressionBuilder {
+public class StatementExpressionBuilder {
 
-    private final StrexpAssignment assignmentNode = new StrexpAssignment();
+    private final RegexExpression expressionNode = new RegexExpression();
 
-    private final List<StrexpAssignment> modifiedVariables = new ArrayList<StrexpAssignment>();
+    private final List<RegexAssignment> modifiedVariables = new ArrayList<RegexAssignment>();
 
-    public StringExpressionBuilder(PsiExpression expression) {
-        log("StringExpressionBuilder");
-        processExpression(expression, assignmentNode);
+    public StatementExpressionBuilder(PsiExpression expression) {
+        log("StatementExpressionBuilder");
+        processExpression(expression, expressionNode);
         log(toString());
         log("");
     }
 
-    public StringExpressionBuilder(PsiDeclarationStatement declarationStatement) {
+    public StatementExpressionBuilder(PsiDeclarationStatement declarationStatement) {
         log("Declaration statement");
         for (PsiElement element : declarationStatement.getDeclaredElements()) {
             element.accept(new JavaElementVisitor() {
@@ -27,10 +27,10 @@ public class StringExpressionBuilder {
                 public void visitLocalVariable(PsiLocalVariable variable) {
                     PsiType type = variable.getType();
                     if ("java.lang.String".equals(type.getCanonicalText())) {
-                        StrexpAssignment variableAssignment = new StrexpAssignment();
-                        variableAssignment.setVariableName(variable.getName());
+                        RegexAssignment variableAssignment = new RegexAssignment();
+                        variableAssignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
                         modifiedVariables.add(variableAssignment);
-                        assignmentNode.joinNode(variableAssignment);
+                        expressionNode.connectNode(variableAssignment);
                         processExpression(variable.getInitializer(), variableAssignment);
                     } else {
                         log("Unknown type: " + type.getCanonicalText());
@@ -40,7 +40,7 @@ public class StringExpressionBuilder {
         }
     }
 
-    private void processReferenceExpression(PsiReferenceExpression referenceExpression, final StrexpNode parentNode) {
+    private void processReferenceExpression(PsiReferenceExpression referenceExpression, final RegexNode parentNode) {
         if (referenceExpression == null) {
             return;
         }
@@ -52,8 +52,9 @@ public class StringExpressionBuilder {
                 public void visitLocalVariable(PsiLocalVariable variable) {
                     PsiType type = variable.getType();
                     if ("java.lang.String".equals(type.getCanonicalText())) {
-                        parentNode.joinNode(new StrexpVariable(variable.getName()));
+                        parentNode.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
                     } else {
+                        // TODO: add support for numeric types
                         log("Unknown type: " + type.getCanonicalText());
                     }
                 }
@@ -71,11 +72,11 @@ public class StringExpressionBuilder {
         }
     }
 
-    private void processAssignmentExpression(final PsiAssignmentExpression assignmentExpression, final StrexpNode parentNode) {
-        final StrexpAssignment variableAssignment = new StrexpAssignment();
-        parentNode.joinNode(variableAssignment);
-        final StrexpNode joinedNode = new StrexpConcatenation();
-        variableAssignment.joinNode(joinedNode);
+    private void processAssignmentExpression(final PsiAssignmentExpression assignmentExpression, final RegexNode parentNode) {
+        final RegexAssignment assignment = new RegexAssignment();
+        parentNode.connectNode(assignment);
+        final RegexNode assignedConcatenation = new RegexConcatenation();
+        assignment.connectNode(assignedConcatenation);
 
         PsiExpression leftExpression = assignmentExpression.getLExpression();
         leftExpression.accept(new JavaElementVisitor() {
@@ -88,11 +89,11 @@ public class StringExpressionBuilder {
                         public void visitLocalVariable(PsiLocalVariable variable) {
                             PsiType type = variable.getType();
                             if ("java.lang.String".equals(type.getCanonicalText())) {
-                                log("Assignment to local variable: " + variable.getName());
-                                variableAssignment.setVariableName(variable.getName());
-                                modifiedVariables.add(variableAssignment);
+                                log("Assignment to local variable: " + variable.getName() + ", identity: " + System.identityHashCode(variable));
+                                assignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+                                modifiedVariables.add(assignment);
                                 if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
-                                    joinedNode.joinNode(new StrexpVariable(variable.getName()));
+                                    assignedConcatenation.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
                                 }
                             } else {
                                 log("Unknown type: " + type.getCanonicalText());
@@ -112,10 +113,10 @@ public class StringExpressionBuilder {
                 }
             }
         });
-        processExpression(assignmentExpression.getRExpression(), joinedNode);
+        processExpression(assignmentExpression.getRExpression(), assignedConcatenation);
     }
 
-    private void processExpression(PsiExpression expression, final StrexpNode parentNode) {
+    private void processExpression(PsiExpression expression, final RegexNode parentNode) {
         if (expression == null) {
             return;
         }
@@ -138,7 +139,7 @@ public class StringExpressionBuilder {
                 log("Literal expression: " + expression.getText());
                 Object value = expression.getValue();
                 if (value != null) {
-                    parentNode.joinNode(new StrexpLiteral(value.toString()));
+                    parentNode.connectNode(new RegexLiteral(value.toString()));
                 }
             }
 
@@ -164,11 +165,11 @@ public class StringExpressionBuilder {
             @Override
             public void visitPolyadicExpression(PsiPolyadicExpression expression) {
                 log("Polyadic expression: " + expression);
-                StrexpNode concatenationNode = new StrexpConcatenation();
+                RegexConcatenation concatenation = new RegexConcatenation();
                 for (PsiExpression operand : expression.getOperands()) {
-                    processExpression(operand, concatenationNode);
+                    processExpression(operand, concatenation);
                 }
-                parentNode.joinNode(concatenationNode);
+                parentNode.connectNode(concatenation);
             }
 
             @Override
@@ -189,21 +190,21 @@ public class StringExpressionBuilder {
         });
     }
 
-    public StrexpAssignment getAssignmentNode() {
-        return assignmentNode;
+    public RegexExpression getExpressionNode() {
+        return expressionNode;
     }
 
-    public List<StrexpAssignment> getModifiedVariables() {
+    public List<RegexAssignment> getModifiedVariables() {
         return Collections.unmodifiableList(modifiedVariables);
     }
 
     public void log(String message) {
-//        System.out.println(message);
+        System.out.println(message);
     }
 
     public String toString() {
         StringBuilder result = new StringBuilder();
-        for (StrexpAssignment variable : modifiedVariables) {
+        for (RegexAssignment variable : modifiedVariables) {
             result.append(variable.toString());
             result.append(";");
         }

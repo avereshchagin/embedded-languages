@@ -1,7 +1,9 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import com.github.avereshchgin.alvor.strexp.StrexpAssignment;
-import com.github.avereshchgin.alvor.strexp.StringExpressionBuilder;
+import com.github.avereshchgin.alvor.regex.RegexAssignment;
+import com.github.avereshchgin.alvor.regex.RegexExpression;
+import com.github.avereshchgin.alvor.regex.RegexVariable;
+import com.github.avereshchgin.alvor.regex.StatementExpressionBuilder;
 import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
@@ -13,10 +15,10 @@ public class CfgIfStatement extends CfgNode {
 
     private final List<CfgNode> prev = new ArrayList<CfgNode>();
 
-    private final StringExpressionBuilder stringExpressionBuilder;
+    private final StatementExpressionBuilder statementExpressionBuilder;
 
     public CfgIfStatement(PsiExpression expression) {
-        stringExpressionBuilder = new StringExpressionBuilder(expression);
+        statementExpressionBuilder = new StatementExpressionBuilder(expression);
     }
 
     public void connectNext(CfgNode node) {
@@ -37,19 +39,19 @@ public class CfgIfStatement extends CfgNode {
     }
 
     public String toString() {
-        return stringExpressionBuilder.toString();
+        return statementExpressionBuilder.toString();
     }
 
-    public StrexpAssignment getRootForVariable(String name) {
-        if ("".equals(name)) {
-            return stringExpressionBuilder.getAssignmentNode();
-        }
-        for (StrexpAssignment variable : stringExpressionBuilder.getModifiedVariables()) {
-            if (name.equals(variable.getVariableName())) {
-                return variable;
+    public RegexExpression getRegexExpression() {
+        return statementExpressionBuilder.getExpressionNode();
+    }
+
+    public RegexAssignment getAssignment(RegexVariable variable) {
+        for (RegexAssignment assignment : statementExpressionBuilder.getModifiedVariables()) {
+            if (variable.equals(assignment.getVariable())) {
+                return assignment;
             }
         }
         return null;
     }
-
 }
