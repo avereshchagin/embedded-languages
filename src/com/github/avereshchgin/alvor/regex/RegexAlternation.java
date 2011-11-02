@@ -9,6 +9,10 @@ public class RegexAlternation implements RegexNode {
 
     private final List<RegexNode> childNodes = new ArrayList<RegexNode>();
 
+    public RegexAlternation() {
+
+    }
+
     public RegexAlternation(RegexNode leftNode, RegexNode rightNode) {
         childNodes.add(leftNode);
         childNodes.add(rightNode);

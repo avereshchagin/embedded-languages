@@ -53,15 +53,29 @@ public class StatementExpressionBuilder {
                     PsiType type = variable.getType();
                     if ("java.lang.String".equals(type.getCanonicalText())) {
                         parentNode.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
+                        parentNode.connectNode(
+                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
+                                        new RegexPlus(new RegexRange('0', '9'))));
                     } else {
-                        // TODO: add support for numeric types
+                        // TODO: add support for other numeric types
                         log("Unknown type: " + type.getCanonicalText());
                     }
                 }
 
                 @Override
                 public void visitField(PsiField field) {
-                    log("Assignment to field: " + field.getName());
+                    PsiType type = field.getType();
+                    if ("java.lang.String".equals(type.getCanonicalText())) {
+                        parentNode.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
+                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
+                        parentNode.connectNode(
+                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
+                                        new RegexPlus(new RegexRange('0', '9'))));
+                    } else {
+                        // TODO: add support for other numeric types
+                        log("Unknown type: " + type.getCanonicalText());
+                    }
                 }
 
                 @Override
@@ -102,7 +116,17 @@ public class StatementExpressionBuilder {
 
                         @Override
                         public void visitField(PsiField field) {
-                            log("Assignment to field: " + field.getName());
+                            PsiType type = field.getType();
+                            if ("java.lang.String".equals(type.getCanonicalText())) {
+                                log("Assignment to field: " + field.getName() + ", identity: " + System.identityHashCode(field));
+                                assignment.setVariable(new RegexVariable(field.getName(), System.identityHashCode(field)));
+                                modifiedVariables.add(assignment);
+                                if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
+                                    assignedConcatenation.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
+                                }
+                            } else {
+                                log("Unknown type: " + type.getCanonicalText());
+                            }
                         }
 
                         @Override
@@ -132,6 +156,13 @@ public class StatementExpressionBuilder {
             @Override
             public void visitConditionalExpression(PsiConditionalExpression expression) {
                 log("Conditional expression: " + expression);
+                RegexConcatenation concatenation = new RegexConcatenation();
+                processExpression(expression.getCondition(), concatenation);
+                RegexAlternation alternation = new RegexAlternation();
+                processExpression(expression.getThenExpression(), alternation);
+                processExpression(expression.getElseExpression(), alternation);
+                concatenation.connectNode(alternation);
+                parentNode.connectNode(concatenation);
             }
 
             @Override
@@ -154,6 +185,32 @@ public class StatementExpressionBuilder {
             @Override
             public void visitNewExpression(PsiNewExpression expression) {
                 log("New expression: " + expression);
+                PsiMethod constructor = expression.resolveConstructor();
+                if (constructor != null) {
+                    PsiClass containingClass = constructor.getContainingClass();
+                    if (containingClass != null) {
+                        if ("java.lang.String".equals(containingClass.getQualifiedName())) {
+                            PsiExpressionList arguments = expression.getArgumentList();
+                            if (arguments != null) {
+                                switch (arguments.getExpressions().length) {
+                                    case 0:
+                                        break;
+                                    case 1:
+                                        if (arguments.getExpressions().length == 1) {
+                                            PsiExpression firstArgument = arguments.getExpressions()[0];
+                                            PsiType type = firstArgument.getType();
+                                            if (type != null && "java.lang.String".equals(type.getCanonicalText())) {
+                                                processExpression(firstArgument, parentNode);
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        log("Unsupported String constructor");
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             @Override
@@ -199,13 +256,16 @@ public class StatementExpressionBuilder {
     }
 
     public void log(String message) {
-        System.out.println(message);
+//        System.out.println(message);
     }
 
     public String toString() {
+        if (modifiedVariables.isEmpty()) {
+            return expressionNode.toString();
+        }
         StringBuilder result = new StringBuilder();
         for (RegexAssignment variable : modifiedVariables) {
-            result.append(variable.toString());
+            result.append(variable);
             result.append(";");
         }
         return result.toString();

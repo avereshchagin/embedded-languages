@@ -160,6 +160,6 @@ public class MyJavaElementVisitor extends JavaElementVisitor {
     }
 
     private void log(String message) {
-        System.out.println(message);
+//        System.out.println(message);
     }
 }

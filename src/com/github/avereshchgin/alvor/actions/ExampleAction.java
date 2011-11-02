@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.search.GlobalSearchScope;
 
 public class ExampleAction extends AnAction {
     @Override
@@ -23,17 +23,17 @@ public class ExampleAction extends AnAction {
             return;
         }
 
-        // TODO: rewrite with visitors
-        JavaPsiFacade facade = JavaPsiFacadeEx.getInstance(project);
-        PsiClass foo = facade.findClass("pac.Foo", GlobalSearchScope.allScope(project));
-        if (foo == null) {
-            System.err.println("Cannot find class pac.Foo in your project.");
-            return;
-        }
-
         ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder(new JDBCMethodsFinder());
-        for (PsiMethod psiMethod : foo.getAllMethods()) {
-            cfgBuilder.addMethod(psiMethod);
+        JavaPsiFacade facade = JavaPsiFacadeEx.getInstance(project);
+        PsiPackage defaultPackage = facade.findPackage("");
+        if (defaultPackage != null) {
+            for (PsiPackage psiPackage : defaultPackage.getSubPackages()) {
+                for (PsiClass psiClass : psiPackage.getClasses()) {
+                    for (PsiMethod psiMethod : psiClass.getMethods()) {
+                        cfgBuilder.addMethod(psiMethod);
+                    }
+                }
+            }
         }
         cfgBuilder.showGraph();
 

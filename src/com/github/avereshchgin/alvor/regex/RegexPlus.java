@@ -15,4 +15,8 @@ public class RegexPlus implements RegexNode {
     public <E> E accept(RegularExpressionVisitor<E> visitor) {
         return visitor.visitPlus(this);
     }
+
+    public String toString() {
+        return node + "+";
+    }
 }
