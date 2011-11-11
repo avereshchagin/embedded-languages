@@ -15,4 +15,13 @@ public class RegexStar implements RegexNode {
     public <E> E accept(RegularExpressionVisitor<E> visitor) {
         return visitor.visitStar(this);
     }
+
+    @Override
+    public String toString() {
+        if (node != null) {
+            return "(" + node.toString() + ")*";
+        } else {
+            return "\"\"";
+        }
+    }
 }

@@ -2,10 +2,12 @@ package com.github.avereshchgin.alvor.cfg;
 
 import com.github.avereshchgin.alvor.verification.VerifiableMethodsFinder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 
 import java.io.PrintStream;
 import java.util.Collections;
+import java.util.List;
 
 public class ControlFlowGraphBuilder {
 
@@ -18,17 +20,29 @@ public class ControlFlowGraphBuilder {
     }
 
     public void addMethod(PsiMethod psiMethod) {
-        CfgNode rootNode = new CfgRoot(psiMethod);
+        CfgStatement rootNode = new CfgRootStatement(psiMethod.getName());
         cfg.addNode(rootNode);
-        MyJavaElementVisitor.processCodeBlock(this, Collections.singletonList(rootNode), psiMethod.getBody());
+        List<CfgStatement> prevNodes = CfgJavaElementVisitor.processCodeBlock(
+                this, Collections.singletonList(rootNode), psiMethod.getBody(),
+                Collections.<PsiIdentifier, CfgStatement>emptyMap()).getPreviousNodes();
+        CfgStatement returnNode = null;
+        for (CfgStatement prevNode : prevNodes) {
+            if (!(prevNode instanceof CfgReturnStatement)) {
+                if (returnNode == null) {
+                    returnNode = new CfgReturnStatement();
+                    cfg.addNode(returnNode);
+                }
+                cfg.addEdge(prevNode, returnNode);
+            }
+        }
     }
 
     private void printDotGraph(PrintStream out) {
         out.println("digraph G {");
         out.println("node [style=filled];");
-        for (CfgNode node : cfg.getNodes()) {
+        for (CfgStatement node : cfg.getNodes()) {
             out.print(System.identityHashCode(node) + " [label=\"" + StringUtil.escapeQuotes(node.toString()) + "\",");
-            if (node instanceof CfgRoot) {
+            if (node instanceof CfgRootStatement || node instanceof CfgReturnStatement) {
                 out.print("color=lightblue");
             } else if (node.isVerificationRequired()) {
                 out.print("color=red");
@@ -39,10 +53,9 @@ public class ControlFlowGraphBuilder {
             }
             out.println("];");
         }
-        for (CfgNode srcNode : cfg.getNodes()) {
-            for (CfgNode destNode : srcNode.getNextNodes()) {
-                out.println(System.identityHashCode(srcNode) + " -> " + System.identityHashCode(destNode) + ";");
-            }
+        for (CfgEdge edge : cfg.getEdges()) {
+            out.println(System.identityHashCode(edge.getSource()) + " -> " +
+                    System.identityHashCode(edge.getDestination()) + ";");
         }
         out.println("}");
     }

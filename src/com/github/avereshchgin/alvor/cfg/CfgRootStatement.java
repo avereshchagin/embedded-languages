@@ -4,27 +4,36 @@ import com.github.avereshchgin.alvor.regex.RegexAssignment;
 import com.github.avereshchgin.alvor.regex.RegexExpression;
 import com.github.avereshchgin.alvor.regex.RegexVariable;
 
-import java.util.List;
+public class CfgRootStatement extends CfgStatement {
 
-public abstract class CfgNode {
+    private final String methodName;
 
-    public abstract void connectNext(CfgNode node);
+    public CfgRootStatement(String methodName) {
+        this.methodName = methodName;
+    }
 
-    public abstract List<CfgNode> getNextNodes();
-
-    protected abstract void connectPrevious(CfgNode node);
-
-    public abstract List<CfgNode> getPreviousNodes();
-
+    @Override
     public boolean isVerificationRequired() {
         return false;
     }
 
+    @Override
+    public void setVerificationRequired(boolean verificationRequired) {
+
+    }
+
+    @Override
     public RegexExpression getRegexExpression() {
         return null;
     }
 
+    @Override
     public RegexAssignment getAssignment(RegexVariable variable) {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return methodName;
     }
 }

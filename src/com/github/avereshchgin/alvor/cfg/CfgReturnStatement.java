@@ -1,30 +1,33 @@
 package com.github.avereshchgin.alvor.cfg;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.github.avereshchgin.alvor.regex.RegexAssignment;
+import com.github.avereshchgin.alvor.regex.RegexExpression;
+import com.github.avereshchgin.alvor.regex.RegexVariable;
 
-public class CfgReturnStatement extends CfgNode {
-    private final List<CfgNode> prev = new ArrayList<CfgNode>();
+public class CfgReturnStatement extends CfgStatement {
+
+    @Override
+    public boolean isVerificationRequired() {
+        return false;
+    }
+
+    @Override
+    public void setVerificationRequired(boolean verificationRequired) {
+
+    }
+
+    @Override
+    public RegexExpression getRegexExpression() {
+        return null;
+    }
+
+    @Override
+    public RegexAssignment getAssignment(RegexVariable variable) {
+        return null;
+    }
 
     @Override
     public String toString() {
         return "return";
     }
-
-    public void connectNext(CfgNode node) {
-    }
-
-    public List<CfgNode> getNextNodes() {
-        return Collections.emptyList();
-    }
-
-    protected void connectPrevious(CfgNode node) {
-        prev.add(node);
-    }
-
-    public List<CfgNode> getPreviousNodes() {
-        return prev;
-    }
-
 }

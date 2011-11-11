@@ -1,7 +1,8 @@
 package com.github.avereshchgin.alvor.actions;
 
-import com.github.avereshchgin.alvor.cfg.CfgNode;
+import com.github.avereshchgin.alvor.cfg.CfgStatement;
 import com.github.avereshchgin.alvor.cfg.ControlFlowGraphBuilder;
+import com.github.avereshchgin.alvor.cfg.DepthFirstSearcher;
 import com.github.avereshchgin.alvor.regex.RegularExpressionBuilder;
 import com.github.avereshchgin.alvor.verification.JDBCMethodsFinder;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -37,7 +38,9 @@ public class ExampleAction extends AnAction {
         }
         cfgBuilder.showGraph();
 
-        for (CfgNode node : cfgBuilder.getControlFlowGraph().getOutflushingMethodCallNodes()) {
+        DepthFirstSearcher.processGraph(cfgBuilder.getControlFlowGraph());
+
+        for (CfgStatement node : cfgBuilder.getControlFlowGraph().getVerifiableMethodCallNodes()) {
             System.out.println();
             System.out.println("Regular expression:");
             System.out.println(RegularExpressionBuilder.buildRegularExpression(node).toString());

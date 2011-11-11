@@ -6,61 +6,32 @@ import com.github.avereshchgin.alvor.regex.RegexVariable;
 import com.github.avereshchgin.alvor.regex.StatementExpressionBuilder;
 import com.intellij.psi.PsiExpression;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class CfgExpressionStatement extends CfgNode {
-
-    private CfgNode next;
-
-    private final List<CfgNode> prev = new ArrayList<CfgNode>();
+public class CfgRegularStatement extends CfgStatement {
 
     private final StatementExpressionBuilder statementExpressionBuilder;
 
     private boolean verificationRequired;
 
-    public CfgExpressionStatement(PsiExpression expression) {
+    public CfgRegularStatement(PsiExpression expression) {
         statementExpressionBuilder = new StatementExpressionBuilder(expression);
     }
 
+    @Override
     public boolean isVerificationRequired() {
         return verificationRequired;
     }
 
+    @Override
     public void setVerificationRequired(boolean verificationRequired) {
         this.verificationRequired = verificationRequired;
     }
 
     @Override
-    public String toString() {
-        return statementExpressionBuilder.toString();
-    }
-
-    public void connectNext(CfgNode node) {
-        next = node;
-        node.connectPrevious(this);
-    }
-
-    public List<CfgNode> getNextNodes() {
-        List<CfgNode> ret = new ArrayList<CfgNode>();
-        if (next != null) {
-            ret.add(next);
-        }
-        return ret;
-    }
-
-    protected void connectPrevious(CfgNode node) {
-        prev.add(node);
-    }
-
-    public List<CfgNode> getPreviousNodes() {
-        return prev;
-    }
-
     public RegexExpression getRegexExpression() {
         return statementExpressionBuilder.getExpressionNode();
     }
 
+    @Override
     public RegexAssignment getAssignment(RegexVariable variable) {
         for (RegexAssignment assignment : statementExpressionBuilder.getModifiedVariables()) {
             if (variable.equals(assignment.getVariable())) {
@@ -70,4 +41,8 @@ public class CfgExpressionStatement extends CfgNode {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return statementExpressionBuilder.toString();
+    }
 }

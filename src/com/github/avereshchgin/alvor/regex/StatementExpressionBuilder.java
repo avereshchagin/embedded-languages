@@ -260,9 +260,6 @@ public class StatementExpressionBuilder {
     }
 
     public String toString() {
-        if (modifiedVariables.isEmpty()) {
-            return expressionNode.toString();
-        }
         StringBuilder result = new StringBuilder();
         for (RegexAssignment variable : modifiedVariables) {
             result.append(variable);

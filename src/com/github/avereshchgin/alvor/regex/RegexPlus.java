@@ -16,7 +16,12 @@ public class RegexPlus implements RegexNode {
         return visitor.visitPlus(this);
     }
 
+    @Override
     public String toString() {
-        return node + "+";
+        if (node != null) {
+            return "(" + node.toString() + ")+";
+        } else {
+            return "\"\"";
+        }
     }
 }

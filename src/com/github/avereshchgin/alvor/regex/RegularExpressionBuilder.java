@@ -1,6 +1,7 @@
 package com.github.avereshchgin.alvor.regex;
 
-import com.github.avereshchgin.alvor.cfg.CfgNode;
+import com.github.avereshchgin.alvor.cfg.CfgEdge;
+import com.github.avereshchgin.alvor.cfg.CfgStatement;
 
 import java.util.Iterator;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.ListIterator;
 
 public class RegularExpressionBuilder {
 
-    public static RegexNode processRegexNode(final RegexNode node, final CfgNode startStatement) {
+    public static RegexNode processRegexNode(final RegexNode node, final CfgStatement borderStatement, final CfgStatement startStatement) {
         log("processRegexNode");
         return node.accept(new RegularExpressionVisitor<RegexNode>() {
 
@@ -18,10 +19,10 @@ public class RegularExpressionBuilder {
                 List<RegexNode> childNodes = concatenation.getChildNodes();
                 Iterator<RegexNode> iterator = childNodes.iterator();
                 if (iterator.hasNext()) {
-                    RegexNode currentNode = processRegexNode(iterator.next(), startStatement);
+                    RegexNode currentNode = processRegexNode(iterator.next(), borderStatement, startStatement);
                     while (iterator.hasNext()) {
                         // TODO: rewrite as .connectNode
-                        currentNode = new RegexConcatenation(currentNode, processRegexNode(iterator.next(), startStatement));
+                        currentNode = new RegexConcatenation(currentNode, processRegexNode(iterator.next(), borderStatement, startStatement));
                     }
                     return currentNode;
                 }
@@ -37,13 +38,13 @@ public class RegularExpressionBuilder {
             @Override
             public RegexNode visitVariable(RegexVariable variable) {
                 log("Variable: " + variable);
-                return fork(startStatement.getPreviousNodes(), variable);
+                return fork(startStatement, borderStatement, variable);
             }
 
             @Override
             public RegexNode visitAssignment(RegexAssignment assignment) {
                 log("Assignment: " + assignment);
-                return processRegexNode(assignment.getChildNode(), startStatement);
+                return processRegexNode(assignment.getChildNode(), borderStatement, startStatement);
             }
 
             @Override
@@ -52,10 +53,10 @@ public class RegularExpressionBuilder {
                 List<RegexNode> childNodes = alternation.getChildNodes();
                 Iterator<RegexNode> iterator = childNodes.iterator();
                 if (iterator.hasNext()) {
-                    RegexNode currentNode = processRegexNode(iterator.next(), startStatement);
+                    RegexNode currentNode = processRegexNode(iterator.next(), borderStatement, startStatement);
                     while (iterator.hasNext()) {
                         // TODO: rewrite as .connectNode
-                        currentNode = new RegexAlternation(currentNode, processRegexNode(iterator.next(), startStatement));
+                        currentNode = new RegexAlternation(currentNode, processRegexNode(iterator.next(), borderStatement, startStatement));
                     }
                     return currentNode;
                 }
@@ -77,7 +78,7 @@ public class RegularExpressionBuilder {
                 log("Expression: " + expression);
                 ListIterator<RegexNode> iterator = expression.getChildNodes().listIterator(expression.getChildNodes().size());
                 if (iterator.hasPrevious()) {
-                    return processRegexNode(iterator.previous(), startStatement);
+                    return processRegexNode(iterator.previous(), borderStatement, startStatement);
                 }
                 return new RegexEmpty();
             }
@@ -100,30 +101,44 @@ public class RegularExpressionBuilder {
         });
     }
 
-    public static RegexNode processStatement(CfgNode statement, RegexVariable variable) {
+    public static RegexNode processStatement(CfgStatement statement, CfgStatement borderStatement, RegexVariable variable) {
         log("Process statement: " + statement);
         RegexAssignment assignment = statement.getAssignment(variable);
         if (assignment != null) {
-            return processRegexNode(assignment, statement);
+            return processRegexNode(assignment, borderStatement, statement);
         }
-        return fork(statement.getPreviousNodes(), variable);
+        if (statement != borderStatement) {
+            return fork(statement, borderStatement, variable);
+        }
+        return new RegexEmpty();
     }
 
-    public static RegexNode fork(List<CfgNode> previousStatements, RegexVariable variable) {
+    public static RegexNode fork(CfgStatement statement, CfgStatement borderStatement, RegexVariable variable) {
         log("Fork");
-        RegexNode currentRegex = new RegexEmpty();
-        Iterator<CfgNode> iterator = previousStatements.iterator();
-        if (iterator.hasNext()) {
-            currentRegex = processStatement(iterator.next(), variable);
-            while (iterator.hasNext()) {
-                currentRegex = new RegexAlternation(currentRegex, processStatement(iterator.next(), variable));
+        for (CfgEdge edge : statement.getOutgoingEdges()) {
+            if (edge.getType() != null) {
+                if (edge.getType().equals(CfgEdge.Type.BACK)) {
+                    if (statement.getIncomingEdges().size() > 0) {
+                        if (edge.getDestination().isAtLeastOnce()) {
+                            return new RegexPlus(processStatement(
+                                    statement.getIncomingEdges().get(0).getSource(), edge.getDestination(), variable));
+                        } else {
+                            return new RegexStar(processStatement(
+                                    statement.getIncomingEdges().get(0).getSource(), edge.getDestination(), variable));
+                        }
+                    }
+                }
             }
         }
-        return currentRegex;
+        // TODO: check if has virtual edge
+        if (statement.getIncomingEdges().size() > 0) {
+            return processStatement(statement.getIncomingEdges().get(0).getSource(), borderStatement, variable);
+        }
+        return new RegexEmpty();
     }
 
-    public static RegexNode buildRegularExpression(CfgNode statement) {
-        return processRegexNode(statement.getRegexExpression(), statement);
+    public static RegexNode buildRegularExpression(CfgStatement statement) {
+        return processRegexNode(statement.getRegexExpression(), null, statement);
     }
 
     public static void log(String message) {

@@ -7,6 +7,7 @@ public class RegexRange implements RegexNode {
     private final char end;
 
     public RegexRange(char start, char end) {
+        assert start <= end;
         this.start = start;
         this.end = end;
     }
