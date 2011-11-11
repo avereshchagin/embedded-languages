@@ -19,7 +19,7 @@ public class CfgJavaElementVisitor extends JavaElementVisitor {
 
     private PsiIdentifier lastLabel;
 
-    private boolean breaked;
+    private boolean broken;
 
     private CfgJavaElementVisitor(ControlFlowGraphBuilder cfgBuilder, List<CfgStatement> previousNodes,
                                   Map<PsiIdentifier, CfgStatement> externalLabels) {
@@ -37,7 +37,7 @@ public class CfgJavaElementVisitor extends JavaElementVisitor {
         CfgJavaElementVisitor elementVisitor = new CfgJavaElementVisitor(cfgBuilder, previousNodes, externalLabels);
         if (codeBlock != null) {
             for (PsiStatement statement : codeBlock.getStatements()) {
-                if (elementVisitor.breaked) {
+                if (elementVisitor.broken) {
                     break;
                 }
                 statement.accept(elementVisitor);
@@ -65,7 +65,7 @@ public class CfgJavaElementVisitor extends JavaElementVisitor {
     public void visitBlockStatement(PsiBlockStatement statement) {
         log("Block statement");
         for (PsiStatement innerStatement : statement.getCodeBlock().getStatements()) {
-            if (breaked) {
+            if (broken) {
                 break;
             }
             innerStatement.accept(this);
@@ -203,13 +203,13 @@ public class CfgJavaElementVisitor extends JavaElementVisitor {
             previousNodes.clear();
             previousNodes.add(labeledNode);
         }
-        breaked = true;
+        broken = true;
     }
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
         log("Break statement: " + statement.getText());
-        breaked = true;
+        broken = true;
     }
 
     @Override
