@@ -23,19 +23,19 @@ public class StatementExpressionBuilder {
         log("Declaration statement");
         for (PsiElement element : declarationStatement.getDeclaredElements()) {
             element.accept(new JavaElementVisitor() {
-                @Override
-                public void visitLocalVariable(PsiLocalVariable variable) {
-                    PsiType type = variable.getType();
-                    if ("java.lang.String".equals(type.getCanonicalText())) {
-                        RegexAssignment variableAssignment = new RegexAssignment();
-                        variableAssignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
-                        modifiedVariables.add(variableAssignment);
-                        expressionNode.connectNode(variableAssignment);
-                        processExpression(variable.getInitializer(), variableAssignment);
-                    } else {
-                        log("Unknown type: " + type.getCanonicalText());
-                    }
-                }
+//                @Override
+//                public void visitLocalVariable(PsiLocalVariable variable) {
+//                    PsiType type = variable.getType();
+//                    if ("java.lang.String".equals(type.getCanonicalText())) {
+//                        RegexAssignment variableAssignment = new RegexAssignment();
+//                        variableAssignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+//                        modifiedVariables.add(variableAssignment);
+//                        expressionNode.connectNode(variableAssignment);
+//                        processExpression(variable.getInitializer(), variableAssignment);
+//                    } else {
+//                        log("Unknown type: " + type.getCanonicalText());
+//                    }
+//                }
             });
         }
     }
@@ -48,35 +48,35 @@ public class StatementExpressionBuilder {
         PsiElement reference = referenceExpression.resolve();
         if (reference != null) {
             reference.accept(new JavaElementVisitor() {
-                @Override
-                public void visitLocalVariable(PsiLocalVariable variable) {
-                    PsiType type = variable.getType();
-                    if ("java.lang.String".equals(type.getCanonicalText())) {
-                        parentNode.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
-                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
-                        parentNode.connectNode(
-                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
-                                        new RegexPlus(new RegexRange('0', '9'))));
-                    } else {
-                        // TODO: add support for other numeric types
-                        log("Unknown type: " + type.getCanonicalText());
-                    }
-                }
-
-                @Override
-                public void visitField(PsiField field) {
-                    PsiType type = field.getType();
-                    if ("java.lang.String".equals(type.getCanonicalText())) {
-                        parentNode.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
-                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
-                        parentNode.connectNode(
-                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
-                                        new RegexPlus(new RegexRange('0', '9'))));
-                    } else {
-                        // TODO: add support for other numeric types
-                        log("Unknown type: " + type.getCanonicalText());
-                    }
-                }
+//                @Override
+//                public void visitLocalVariable(PsiLocalVariable variable) {
+//                    PsiType type = variable.getType();
+//                    if ("java.lang.String".equals(type.getCanonicalText())) {
+//                        parentNode.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+//                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
+//                        parentNode.connectNode(
+//                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
+//                                        new RegexPlus(new RegexRange('0', '9'))));
+//                    } else {
+//                        // TODO: add support for other numeric types
+//                        log("Unknown type: " + type.getCanonicalText());
+//                    }
+//                }
+//
+//                @Override
+//                public void visitField(PsiField field) {
+//                    PsiType type = field.getType();
+//                    if ("java.lang.String".equals(type.getCanonicalText())) {
+//                        parentNode.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
+//                    } else if ("int".equals(type.getCanonicalText()) || "java.lang.Integer".equals(type.getCanonicalText())) {
+//                        parentNode.connectNode(
+//                                new RegexConcatenation(new RegexAlternation(new RegexLiteral("-"), new RegexEmpty()),
+//                                        new RegexPlus(new RegexRange('0', '9'))));
+//                    } else {
+//                        // TODO: add support for other numeric types
+//                        log("Unknown type: " + type.getCanonicalText());
+//                    }
+//                }
 
                 @Override
                 public void visitElement(PsiElement element) {
@@ -87,57 +87,57 @@ public class StatementExpressionBuilder {
     }
 
     private void processAssignmentExpression(final PsiAssignmentExpression assignmentExpression, final RegexNode parentNode) {
-        final RegexAssignment assignment = new RegexAssignment();
-        parentNode.connectNode(assignment);
-        final RegexNode assignedConcatenation = new RegexConcatenation();
-        assignment.connectNode(assignedConcatenation);
-
-        PsiExpression leftExpression = assignmentExpression.getLExpression();
-        leftExpression.accept(new JavaElementVisitor() {
-            @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-                PsiElement reference = expression.resolve();
-                if (reference != null) {
-                    reference.accept(new JavaElementVisitor() {
-                        @Override
-                        public void visitLocalVariable(PsiLocalVariable variable) {
-                            PsiType type = variable.getType();
-                            if ("java.lang.String".equals(type.getCanonicalText())) {
-                                log("Assignment to local variable: " + variable.getName() + ", identity: " + System.identityHashCode(variable));
-                                assignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
-                                modifiedVariables.add(assignment);
-                                if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
-                                    assignedConcatenation.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
-                                }
-                            } else {
-                                log("Unknown type: " + type.getCanonicalText());
-                            }
-                        }
-
-                        @Override
-                        public void visitField(PsiField field) {
-                            PsiType type = field.getType();
-                            if ("java.lang.String".equals(type.getCanonicalText())) {
-                                log("Assignment to field: " + field.getName() + ", identity: " + System.identityHashCode(field));
-                                assignment.setVariable(new RegexVariable(field.getName(), System.identityHashCode(field)));
-                                modifiedVariables.add(assignment);
-                                if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
-                                    assignedConcatenation.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
-                                }
-                            } else {
-                                log("Unknown type: " + type.getCanonicalText());
-                            }
-                        }
-
-                        @Override
-                        public void visitElement(PsiElement element) {
-                            log("Unknown element: " + element);
-                        }
-                    });
-                }
-            }
-        });
-        processExpression(assignmentExpression.getRExpression(), assignedConcatenation);
+//        final RegexAssignment assignment = new RegexAssignment();
+//        parentNode.connectNode(assignment);
+//        final RegexNode assignedConcatenation = new RegexConcatenation();
+//        assignment.connectNode(assignedConcatenation);
+//
+//        PsiExpression leftExpression = assignmentExpression.getLExpression();
+//        leftExpression.accept(new JavaElementVisitor() {
+//            @Override
+//            public void visitReferenceExpression(PsiReferenceExpression expression) {
+//                PsiElement reference = expression.resolve();
+//                if (reference != null) {
+//                    reference.accept(new JavaElementVisitor() {
+//                        @Override
+//                        public void visitLocalVariable(PsiLocalVariable variable) {
+//                            PsiType type = variable.getType();
+//                            if ("java.lang.String".equals(type.getCanonicalText())) {
+//                                log("Assignment to local variable: " + variable.getName() + ", identity: " + System.identityHashCode(variable));
+//                                assignment.setVariable(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+//                                modifiedVariables.add(assignment);
+//                                if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
+//                                    assignedConcatenation.connectNode(new RegexVariable(variable.getName(), System.identityHashCode(variable)));
+//                                }
+//                            } else {
+//                                log("Unknown type: " + type.getCanonicalText());
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void visitField(PsiField field) {
+//                            PsiType type = field.getType();
+//                            if ("java.lang.String".equals(type.getCanonicalText())) {
+//                                log("Assignment to field: " + field.getName() + ", identity: " + System.identityHashCode(field));
+//                                assignment.setVariable(new RegexVariable(field.getName(), System.identityHashCode(field)));
+//                                modifiedVariables.add(assignment);
+//                                if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
+//                                    assignedConcatenation.connectNode(new RegexVariable(field.getName(), System.identityHashCode(field)));
+//                                }
+//                            } else {
+//                                log("Unknown type: " + type.getCanonicalText());
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void visitElement(PsiElement element) {
+//                            log("Unknown element: " + element);
+//                        }
+//                    });
+//                }
+//            }
+//        });
+//        processExpression(assignmentExpression.getRExpression(), assignedConcatenation);
     }
 
     private void processExpression(PsiExpression expression, final RegexNode parentNode) {

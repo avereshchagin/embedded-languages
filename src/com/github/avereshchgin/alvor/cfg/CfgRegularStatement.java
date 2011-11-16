@@ -3,17 +3,18 @@ package com.github.avereshchgin.alvor.cfg;
 import com.github.avereshchgin.alvor.regex.RegexAssignment;
 import com.github.avereshchgin.alvor.regex.RegexExpression;
 import com.github.avereshchgin.alvor.regex.RegexVariable;
-import com.github.avereshchgin.alvor.regex.StatementExpressionBuilder;
-import com.intellij.psi.PsiExpression;
 
 public class CfgRegularStatement extends CfgStatement {
 
-    private final StatementExpressionBuilder statementExpressionBuilder;
+//    private final StatementExpressionBuilder statementExpressionBuilder;
+
+    private String what;
 
     private boolean verificationRequired;
 
-    public CfgRegularStatement(PsiExpression expression) {
-        statementExpressionBuilder = new StatementExpressionBuilder(expression);
+    public CfgRegularStatement(String what) {
+//        statementExpressionBuilder = new StatementExpressionBuilder(expression);
+        this.what = what;
     }
 
     @Override
@@ -28,21 +29,22 @@ public class CfgRegularStatement extends CfgStatement {
 
     @Override
     public RegexExpression getRegexExpression() {
-        return statementExpressionBuilder.getExpressionNode();
+//        return statementExpressionBuilder.getExpressionNode();
+        return null;
     }
 
     @Override
     public RegexAssignment getAssignment(RegexVariable variable) {
-        for (RegexAssignment assignment : statementExpressionBuilder.getModifiedVariables()) {
-            if (variable.equals(assignment.getVariable())) {
-                return assignment;
-            }
-        }
+//        for (RegexAssignment assignment : statementExpressionBuilder.getModifiedVariables()) {
+//            if (variable.equals(assignment.getVariable())) {
+//                return assignment;
+//            }
+//        }
         return null;
     }
 
     @Override
     public String toString() {
-        return statementExpressionBuilder.toString();
+        return what;//statementExpressionBuilder.toString();
     }
 }

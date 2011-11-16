@@ -4,11 +4,8 @@ public class RegexVariable implements RegexNode {
 
     private final String name;
 
-    private final int identity;
-
-    public RegexVariable(String name, int identity) {
+    public RegexVariable(String name) {
         this.name = name;
-        this.identity = identity;
     }
 
     public void connectNode(RegexNode node) {
@@ -18,16 +15,11 @@ public class RegexVariable implements RegexNode {
         return visitor.visitVariable(this);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof RegexVariable) {
-            RegexVariable that = (RegexVariable) o;
-            return this.identity == that.identity;
-        }
-        return false;
-    }
-
     public String toString() {
-        return "<" + name + ">";
+        if (name != null && !name.isEmpty()) {
+            return "<" + name + ">";
+        } else {
+            return "<tmp_" + System.identityHashCode(this) + ">";
+        }
     }
 }
