@@ -2,6 +2,7 @@ package com.github.avereshchagin.emblang.actions;
 
 import com.github.avereshchagin.emblang.cfg.ControlFlowGraphBuilder;
 import com.github.avereshchagin.emblang.controlflow.ControlFlowBuilder;
+import com.github.avereshchagin.emblang.verification.JDBCMethodsFinder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -21,22 +22,22 @@ public class ExampleAction extends AnAction {
             return;
         }
 
-//        ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder(new JDBCMethodsFinder());
+        ControlFlowBuilder controlFlowBuilder = new ControlFlowBuilder(new JDBCMethodsFinder());
         JavaPsiFacade facade = JavaPsiFacadeEx.getInstance(project);
         PsiPackage defaultPackage = facade.findPackage("");
         if (defaultPackage != null) {
             for (PsiPackage psiPackage : defaultPackage.getSubPackages()) {
                 for (PsiClass psiClass : psiPackage.getClasses()) {
                     for (PsiMethod psiMethod : psiClass.getMethods()) {
-//                        cfgBuilder.addMethod(psiMethod);
-                        ControlFlowBuilder controlFlowBuilder = ControlFlowBuilder.processMethod(psiMethod);
-                        System.out.println(controlFlowBuilder.toString());
-                        ControlFlowGraphBuilder builder = ControlFlowGraphBuilder.fromControlFlow(controlFlowBuilder.getControlFlow());
-                        builder.showGraph();
+                        controlFlowBuilder.processMethod(psiMethod);
+
                     }
                 }
             }
         }
+        System.out.println(controlFlowBuilder.toString());
+        ControlFlowGraphBuilder builder = ControlFlowGraphBuilder.fromControlFlow(controlFlowBuilder.getControlFlow());
+        builder.showGraph();
 //        cfgBuilder.showGraph();
 //
 //        DepthFirstSearcher.processGraph(cfgBuilder.getControlFlowGraph());

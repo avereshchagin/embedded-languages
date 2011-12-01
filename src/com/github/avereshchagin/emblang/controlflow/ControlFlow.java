@@ -6,27 +6,47 @@ import java.util.List;
 
 public class ControlFlow {
 
+    /**
+     * List of all instructions.
+     */
     private final List<Instruction> instructions = new ArrayList<Instruction>();
 
-//    private final List<Label> labels = new ArrayList<Label>();
+    /**
+     * List of entry instructions for all methods.
+     */
+    private final List<EntryInstruction> methodEntries = new ArrayList<EntryInstruction>();
 
+    /**
+     * Adds instruction after last instruction of current list.
+     *
+     * @param instruction An instruction to be added.
+     */
     public void addLast(Instruction instruction) {
+        if (instruction instanceof EntryInstruction) {
+            methodEntries.add((EntryInstruction) instruction);
+        }
         instructions.add(instruction);
     }
 
-//    public void addLabel(Label label) {
-//        labels.add(label);
-//    }
-
+    /**
+     * @return Unmodifiable list of all instructions.
+     */
     public List<Instruction> getInstructions() {
         return Collections.unmodifiableList(instructions);
+    }
+
+    /**
+     * @return Unmodifiable list of entry instructions for all methods.
+     */
+    public List<EntryInstruction> getMethodEntries() {
+        return Collections.unmodifiableList(methodEntries);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         for (Instruction instruction : instructions) {
-            stringBuilder.append(instruction.toString()).append("\n");
+            stringBuilder.append(instruction.toString()).append('\n');
         }
         return stringBuilder.toString();
     }

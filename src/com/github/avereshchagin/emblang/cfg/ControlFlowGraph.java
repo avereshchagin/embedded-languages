@@ -23,12 +23,6 @@ public class ControlFlowGraph {
         edges.add(new CfgEdge(source, destination));
     }
 
-    public void addEdges(List<CfgStatement> sources, CfgStatement destination) {
-        for (CfgStatement source : sources) {
-            addEdge(source, destination);
-        }
-    }
-
     public List<CfgStatement> getNodes() {
         return Collections.unmodifiableList(nodes);
     }

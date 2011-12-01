@@ -2,8 +2,14 @@ package com.github.avereshchagin.emblang.controlflow;
 
 public class ConditionalInstruction implements Instruction {
 
+    /**
+     * Target label to jump if condition isn't satisfied.
+     */
     private final Label falseLabel = new Label();
 
+    /**
+     * Label to instruction where conditional branches are merged.
+     */
     private final Label endLabel = new Label();
 
     public Label getEndLabel() {
@@ -20,6 +26,6 @@ public class ConditionalInstruction implements Instruction {
 
     @Override
     public String toString() {
-        return "iffalse <> jump " + falseLabel.toString();
+        return "iffalse " + falseLabel.toString();
     }
 }

@@ -1,14 +1,10 @@
 package com.github.avereshchagin.emblang.cfg;
 
-import com.github.avereshchagin.emblang.regex.RegexAssignment;
-import com.github.avereshchagin.emblang.regex.RegexExpression;
-import com.github.avereshchagin.emblang.regex.RegexVariable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class CfgStatement {
+public class CfgStatement {
 
     protected final List<CfgEdge> incomingEdges = new ArrayList<CfgEdge>();
 
@@ -21,6 +17,8 @@ public abstract class CfgStatement {
     protected boolean visited;
 
     protected boolean atLeastOnce;
+
+    private boolean verificationRequired;
 
     public List<CfgEdge> getIncomingEdges() {
         return Collections.unmodifiableList(incomingEdges);
@@ -70,11 +68,16 @@ public abstract class CfgStatement {
         this.atLeastOnce = atLeastOnce;
     }
 
-    public abstract boolean isVerificationRequired();
+    public boolean isVerificationRequired() {
+        return verificationRequired;
+    }
 
-    public abstract void setVerificationRequired(boolean verificationRequired);
+    public void setVerificationRequired(boolean verificationRequired) {
+        this.verificationRequired = verificationRequired;
+    }
 
-    public abstract RegexExpression getRegexExpression();
-
-    public abstract RegexAssignment getAssignment(RegexVariable variable);
+    @Override
+    public String toString() {
+        return "";
+    }
 }

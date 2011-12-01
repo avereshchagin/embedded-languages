@@ -87,8 +87,16 @@ public class ControlFlowGraphBuilder {
 
                 @Override
                 public Object visitEntryInstruction(EntryInstruction instruction) {
-                    // TODO: pass valid method name
-                    CfgStatement node = new CfgRootStatement("");
+                    CfgStatement node = new CfgRootStatement(instruction.getName());
+                    nodes.put(instruction, node);
+                    cfg.addNode(node);
+                    return null;
+                }
+
+                @Override
+                public Object visitAssignmentInstruction(AssignmentInstruction instruction) {
+                    CfgStatement node = new CfgAssignmentStatement(instruction.getVariable(), instruction.getExpression());
+                    node.setVerificationRequired(instruction.isVerificationRequired());
                     nodes.put(instruction, node);
                     cfg.addNode(node);
                     return null;
@@ -114,8 +122,7 @@ public class ControlFlowGraphBuilder {
 
                 @Override
                 public Object visitInstruction(Instruction instruction) {
-                    // TODO: fix passing expression
-                    CfgStatement node = new CfgRegularStatement(instruction.toString());
+                    CfgStatement node = new CfgStatement();
                     nodes.put(instruction, node);
                     cfg.addNode(node);
                     return null;
@@ -136,6 +143,7 @@ public class ControlFlowGraphBuilder {
                         if (source != null && destination != null) {
                             cfg.addEdge(source, destination);
                         }
+                        previousInstruction = null;
                     }
                     return null;
                 }
@@ -236,8 +244,4 @@ public class ControlFlowGraphBuilder {
     public ControlFlowGraph getControlFlowGraph() {
         return cfg;
     }
-
-//    public VerifiableMethodsFinder getFinder() {
-//        return finder;
-//    }
 }

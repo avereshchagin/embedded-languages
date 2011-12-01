@@ -1,6 +1,7 @@
 package com.github.avereshchagin.emblang.controlflow;
 
 import com.github.avereshchagin.emblang.regex.*;
+import com.github.avereshchagin.emblang.verification.VerifiableMethodsFinder;
 import com.intellij.psi.*;
 
 import java.util.IdentityHashMap;
@@ -8,20 +9,25 @@ import java.util.Map;
 
 public class ControlFlowBuilder extends JavaElementVisitor {
 
+    private final VerifiableMethodsFinder finder;
+
     private final ControlFlow controlFlow = new ControlFlow();
 
     private final Map<PsiElement, Instruction> elements = new IdentityHashMap<PsiElement, Instruction>();
 
     private final Map<PsiVariable, RegexVariable> variables = new IdentityHashMap<PsiVariable, RegexVariable>();
 
-    public static ControlFlowBuilder processMethod(PsiMethod method) {
-        ControlFlowBuilder generator = new ControlFlowBuilder();
+    public ControlFlowBuilder(VerifiableMethodsFinder finder) {
+        this.finder = finder;
+    }
+
+    public void processMethod(PsiMethod method) {
+        addInstruction(method, new EntryInstruction(method.getName()));
         PsiCodeBlock codeBlock = method.getBody();
         if (codeBlock != null) {
-            codeBlock.accept(generator);
+            codeBlock.accept(this);
         }
-        generator.controlFlow.addLast(new ReturnInstruction());
-        return generator;
+        addInstruction(null, new ReturnInstruction());
     }
 
     @Override
@@ -152,6 +158,20 @@ public class ControlFlowBuilder extends JavaElementVisitor {
             @Override
             public void visitMethodCallExpression(PsiMethodCallExpression expression) {
                 log("Method call expression: " + expression);
+                PsiExpression[] argumentsExpressions = expression.getArgumentList().getExpressions();
+                if (argumentsExpressions.length > 0) {
+                    if (finder.isVerificationRequired(expression.resolveMethod())) {
+                        RegexNode rootNode = new RegexConcatenation();
+                        processExpression(argumentsExpressions[0], rootNode);
+                        AssignmentInstruction instruction = new AssignmentInstruction(new RegexVariable(null), rootNode);
+                        instruction.setVerificationRequired(true);
+                        addInstruction(expression, instruction);
+                    } else {
+                        for (PsiExpression argumentExpression : argumentsExpressions) {
+                            processExpression(argumentExpression, new RegexEmpty());
+                        }
+                    }
+                }
                 // TODO: process (s = "ccc").equals("vvv")
                 // TODO: process strings in arguments
                 // TODO: process return value
@@ -260,7 +280,11 @@ public class ControlFlowBuilder extends JavaElementVisitor {
         log("While statement");
 
         LoopInstruction whileInstruction = new LoopInstruction();
+        // label from which new iteration starts
         addInstruction(null, new LabelTargetInstruction(whileInstruction.getContinueLabel()));
+        // operations within the condition
+        processExpression(statement.getCondition(), new RegexEmpty());
+        // instruction from which loop interrupts
         addInstruction(statement, whileInstruction);
 
         PsiStatement body = statement.getBody();

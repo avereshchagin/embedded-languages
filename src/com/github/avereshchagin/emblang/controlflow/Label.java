@@ -4,6 +4,14 @@ public class Label {
 
     private Instruction target;
 
+    public Label() {
+
+    }
+
+    public Label(Instruction target) {
+        this.target = target;
+    }
+
     public Instruction getTarget() {
         return target;
     }

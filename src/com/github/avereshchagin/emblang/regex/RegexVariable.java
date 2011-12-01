@@ -5,7 +5,11 @@ public class RegexVariable implements RegexNode {
     private final String name;
 
     public RegexVariable(String name) {
-        this.name = name;
+        if (name != null && !name.isEmpty()) {
+            this.name = name;
+        } else {
+            this.name = "tmp_" + System.identityHashCode(this);
+        }
     }
 
     public void connectNode(RegexNode node) {
@@ -16,10 +20,6 @@ public class RegexVariable implements RegexNode {
     }
 
     public String toString() {
-        if (name != null && !name.isEmpty()) {
-            return "<" + name + ">";
-        } else {
-            return "<tmp_" + System.identityHashCode(this) + ">";
-        }
+        return "<" + name + ">";
     }
 }

@@ -2,8 +2,14 @@ package com.github.avereshchagin.emblang.controlflow;
 
 public class LoopInstruction implements Instruction {
 
+    /**
+     * Label to first instruction on new iteration.
+     */
     private final Label continueLabel = new Label();
 
+    /**
+     * Label to first instruction after last iteration.
+     */
     private final Label breakLabel = new Label();
 
     public Label getContinueLabel() {
@@ -20,6 +26,6 @@ public class LoopInstruction implements Instruction {
 
     @Override
     public String toString() {
-        return "iffalse <> jump " + breakLabel.toString();
+        return "iffalse " + breakLabel.toString();
     }
 }

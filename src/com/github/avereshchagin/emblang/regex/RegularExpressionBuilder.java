@@ -103,13 +103,13 @@ public class RegularExpressionBuilder {
 
     public static RegexNode processStatement(CfgStatement statement, CfgStatement borderStatement, RegexVariable variable) {
         log("Process statement: " + statement);
-        RegexAssignment assignment = statement.getAssignment(variable);
-        if (assignment != null) {
-            return processRegexNode(assignment, borderStatement, statement);
-        }
-        if (statement != borderStatement) {
-            return fork(statement, borderStatement, variable);
-        }
+//        RegexAssignment assignment = statement.getAssignment(variable);
+//        if (assignment != null) {
+//            return processRegexNode(assignment, borderStatement, statement);
+//        }
+//        if (statement != borderStatement) {
+//            return fork(statement, borderStatement, variable);
+//        }
         return new RegexEmpty();
     }
 
@@ -138,7 +138,8 @@ public class RegularExpressionBuilder {
     }
 
     public static RegexNode buildRegularExpression(CfgStatement statement) {
-        return processRegexNode(statement.getRegexExpression(), null, statement);
+//        return processRegexNode(statement.getRegexExpression(), null, statement);
+        return null;
     }
 
     public static void log(String message) {
