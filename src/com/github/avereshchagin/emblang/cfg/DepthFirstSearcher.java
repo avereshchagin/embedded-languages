@@ -1,12 +1,15 @@
 package com.github.avereshchagin.emblang.cfg;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DepthFirstSearcher {
 
-    private static int clock;
+    private int clock;
 
-    private static void explore(CfgStatement node) {
+    private List<CfgStatement> topOrdering = new ArrayList<CfgStatement>();
+
+    private void explore(CfgStatement node) {
         node.setVisited(true);
         node.setEnterValue(clock++);
         for (CfgEdge edge : node.getIncomingEdges()) {
@@ -15,11 +18,11 @@ public class DepthFirstSearcher {
             }
         }
         node.setLeaveValue(clock++);
+        topOrdering.add(node);
     }
 
-    public static void processGraph(ControlFlowGraph controlFlowGraph) {
+    public void processGraph(ControlFlowGraph controlFlowGraph) {
         List<CfgStatement> startNodes = controlFlowGraph.getVerifiableMethodCallNodes();
-        clock = 0;
         for (CfgStatement node : startNodes) {
             if (!node.isVisited()) {
                 explore(node);
@@ -38,5 +41,9 @@ public class DepthFirstSearcher {
                 }
             }
         }
+    }
+
+    public List<CfgStatement> getTopOrdering() {
+        return topOrdering;
     }
 }

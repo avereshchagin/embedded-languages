@@ -1,5 +1,7 @@
 package com.github.avereshchagin.emblang.regex;
 
+import java.util.Set;
+
 public class RegexStar implements RegexNode {
 
     private final RegexNode node;
@@ -14,6 +16,10 @@ public class RegexStar implements RegexNode {
 
     public <E> E accept(RegularExpressionVisitor<E> visitor) {
         return visitor.visitStar(this);
+    }
+
+    public Set<RegexVariable> findUsedVariables() {
+        return node.findUsedVariables();
     }
 
     @Override

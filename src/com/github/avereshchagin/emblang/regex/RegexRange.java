@@ -1,5 +1,8 @@
 package com.github.avereshchagin.emblang.regex;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class RegexRange implements RegexNode {
 
     private final char start;
@@ -20,6 +23,11 @@ public class RegexRange implements RegexNode {
         return visitor.visitRange(this);
     }
 
+    public Set<RegexVariable> findUsedVariables() {
+        return Collections.emptySet();
+    }
+
+    @Override
     public String toString() {
         return "[" + start + "-" + end + "]";
     }

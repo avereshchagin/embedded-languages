@@ -222,7 +222,8 @@ public class ControlFlowGraphBuilder {
         }
         for (CfgEdge edge : cfg.getEdges()) {
             out.println(System.identityHashCode(edge.getSource()) + " -> " +
-                    System.identityHashCode(edge.getDestination()) + ";");
+                    System.identityHashCode(edge.getDestination()) +
+                    (CfgEdge.Type.BACK.equals(edge.getType()) ? " [style=dashed]" : "") + ";");
         }
         out.println("}");
     }

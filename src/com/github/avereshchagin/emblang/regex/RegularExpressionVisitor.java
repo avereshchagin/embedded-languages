@@ -26,14 +26,6 @@ public class RegularExpressionVisitor<E> {
         return visitAnyNode(range);
     }
 
-    public E visitAssignment(RegexAssignment assignment) {
-        return visitAnyNode(assignment);
-    }
-
-    public E visitExpression(RegexExpression expression) {
-        return visitAnyNode(expression);
-    }
-
     public E visitStar(RegexStar star) {
         return visitAnyNode(star);
     }

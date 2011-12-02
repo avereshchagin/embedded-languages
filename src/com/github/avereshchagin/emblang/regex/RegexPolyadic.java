@@ -14,6 +14,14 @@ public abstract class RegexPolyadic implements RegexNode {
         childNodes.add(node);
     }
 
+    public Set<RegexVariable> findUsedVariables() {
+        Set<RegexVariable> result = new HashSet<RegexVariable>();
+        for (RegexNode childNode : childNodes) {
+            result.addAll(childNode.findUsedVariables());
+        }
+        return result;
+    }
+
     public List<RegexNode> getChildNodes() {
         return Collections.unmodifiableList(childNodes);
     }

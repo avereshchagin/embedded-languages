@@ -1,5 +1,7 @@
 package com.github.avereshchagin.emblang.regex;
 
+import java.util.Set;
+
 public class RegexPlus implements RegexNode {
 
     private final RegexNode node;
@@ -14,6 +16,10 @@ public class RegexPlus implements RegexNode {
 
     public <E> E accept(RegularExpressionVisitor<E> visitor) {
         return visitor.visitPlus(this);
+    }
+
+    public Set<RegexVariable> findUsedVariables() {
+        return node.findUsedVariables();
     }
 
     @Override

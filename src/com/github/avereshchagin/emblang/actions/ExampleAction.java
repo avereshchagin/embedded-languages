@@ -1,7 +1,11 @@
 package com.github.avereshchagin.emblang.actions;
 
+import com.github.avereshchagin.emblang.cfg.CfgStatement;
 import com.github.avereshchagin.emblang.cfg.ControlFlowGraphBuilder;
+import com.github.avereshchagin.emblang.cfg.DepthFirstSearcher;
 import com.github.avereshchagin.emblang.controlflow.ControlFlowBuilder;
+import com.github.avereshchagin.emblang.regex.RegexNode;
+import com.github.avereshchagin.emblang.regex.RegularExpressionBuilder;
 import com.github.avereshchagin.emblang.verification.JDBCMethodsFinder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,15 +41,19 @@ public class ExampleAction extends AnAction {
         }
         System.out.println(controlFlowBuilder.toString());
         ControlFlowGraphBuilder builder = ControlFlowGraphBuilder.fromControlFlow(controlFlowBuilder.getControlFlow());
+
+        DepthFirstSearcher searcher = new DepthFirstSearcher();
+        searcher.processGraph(builder.getControlFlowGraph());
         builder.showGraph();
-//        cfgBuilder.showGraph();
-//
-//        DepthFirstSearcher.processGraph(cfgBuilder.getControlFlowGraph());
-//
-//        for (CfgStatement node : cfgBuilder.getControlFlowGraph().getVerifiableMethodCallNodes()) {
+
+        RegularExpressionBuilder regularExpressionBuilder = new RegularExpressionBuilder();
+
+        for (CfgStatement statement : builder.getControlFlowGraph().getVerifiableMethodCallNodes()) {
+            RegexNode expression = regularExpressionBuilder.buildRegularExpression(statement, searcher.getTopOrdering());
+            System.out.println(expression.toString());
 //            System.out.println();
 //            System.out.println("Regular expression:");
 //            System.out.println(RegularExpressionBuilder.buildRegularExpression(node).toString());
-//        }
+        }
     }
 }
