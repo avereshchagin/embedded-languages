@@ -1,9 +1,5 @@
-package com.github.avereshchagin.emblang.cfg.tests;
+package com.github.avereshchagin.emblang.cfg;
 
-import com.github.avereshchagin.emblang.cfg.CfgEdge;
-import com.github.avereshchagin.emblang.cfg.CfgStatement;
-import com.github.avereshchagin.emblang.cfg.ControlFlowGraph;
-import com.github.avereshchagin.emblang.cfg.ControlFlowGraphBuilder;
 import com.github.avereshchagin.emblang.controlflow.*;
 import com.github.avereshchagin.emblang.regex.RegexEmpty;
 import com.github.avereshchagin.emblang.regex.RegexVariable;
@@ -12,7 +8,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class ControlFlowGraphBuilderTest {
+public class CfgFromInstructionsBuilderTest {
 
     @Test
     public void testLinearControlFlow() {
@@ -22,7 +18,7 @@ public class ControlFlowGraphBuilderTest {
         controlFlow.addLast(new AssignmentInstruction(new RegexVariable("b"), new RegexEmpty()));
         controlFlow.addLast(new AssignmentInstruction(new RegexVariable("c"), new RegexEmpty()));
         controlFlow.addLast(new ReturnInstruction());
-        ControlFlowGraphBuilder builder = ControlFlowGraphBuilder.fromControlFlow(controlFlow);
+        CfgFromInstructionsBuilder builder = CfgFromInstructionsBuilder.fromControlFlow(controlFlow);
         ControlFlowGraph cfg = builder.getControlFlowGraph();
         List<CfgStatement> nodes = cfg.getNodes();
         Assert.assertTrue(nodes.size() == 5);
@@ -45,7 +41,7 @@ public class ControlFlowGraphBuilderTest {
 
         controlFlow.addLast(new ReturnInstruction());
 
-        ControlFlowGraphBuilder builder = ControlFlowGraphBuilder.fromControlFlow(controlFlow);
+        CfgFromInstructionsBuilder builder = CfgFromInstructionsBuilder.fromControlFlow(controlFlow);
         ControlFlowGraph cfg = builder.getControlFlowGraph();
         List<CfgStatement> nodes = cfg.getNodes();
         Assert.assertTrue(nodes.size() == 5);

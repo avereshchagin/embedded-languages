@@ -1,11 +1,15 @@
 package com.github.avereshchagin.emblang.regex;
 
 import com.github.avereshchagin.emblang.cfg.CfgAssignmentStatement;
+import com.github.avereshchagin.emblang.cfg.CfgEdge;
 import com.github.avereshchagin.emblang.cfg.CfgStatement;
 
 import java.util.*;
 
 public class RegularExpressionBuilder {
+
+    private Set<RegexVariable> variables;
+    private final Map<RegexVariable, RegexNode> values = new HashMap<RegexVariable, RegexNode>();
 
     private RegexNode replaceVariables(final RegexNode node, final Map<RegexVariable, RegexNode> values) {
         return node.accept(new RegularExpressionVisitor<RegexNode>() {
@@ -72,24 +76,83 @@ public class RegularExpressionBuilder {
         return variables;
     }
 
-    public RegexNode buildRegularExpression(CfgStatement statement, List<CfgStatement> topOrdering) {
+    private CfgStatement buildByLoopControlFlow(CfgStatement start, int loopId) {
+        List<CfgAssignmentStatement> preLoopNodes = new ArrayList<CfgAssignmentStatement>();
+        while (true) {
+            if (start instanceof CfgAssignmentStatement) {
+                preLoopNodes.add((CfgAssignmentStatement) start);
+            }
+            if (start.getOutgoingEdges().size() > 1) {
+                break;
+            }
+            start = start.getOutgoingEdges().get(0).getDestination();
+        }
+
+        CfgStatement out = start;
+        List<CfgAssignmentStatement> loopNodes = new ArrayList<CfgAssignmentStatement>();
+        do {
+            for (CfgEdge edge : start.getOutgoingEdges()) {
+                if (edge.getDestination().containsLoop(loopId)) {
+                    start = edge.getDestination();
+                }
+            }
+            if (start instanceof CfgAssignmentStatement) {
+                loopNodes.add((CfgAssignmentStatement) start);
+            }
+        } while (start != out);
+
+        Map<RegexVariable, RegexNode> loopValues = new HashMap<RegexVariable, RegexNode>();
+        for (RegexVariable variable : variables) {
+            loopValues.put(variable, new RegexEmpty());
+        }
+        for (CfgAssignmentStatement node : loopNodes) {
+            if (variables.contains(node.getVariable())) {
+                loopValues.put(node.getVariable(),
+                        replaceVariables(node.getExpression(), loopValues));
+            }
+        }
+
+        for (RegexVariable variable : variables) {
+            values.put(variable, new RegexConcatenation(values.get(variable), new RegexStar(loopValues.get(variable))));
+        }
+
+        for (CfgEdge edge : out.getOutgoingEdges()) {
+            if (!edge.getDestination().containsLoop(loopId)) {
+                return edge.getDestination();
+            }
+        }
+        return out;
+    }
+
+    private RegexNode buildByLinearControlFlow(CfgStatement start, CfgStatement end, RegexVariable variable) {
+        CfgStatement current = start;
+        while (true) {
+            if (current instanceof CfgAssignmentStatement) {
+                CfgAssignmentStatement currentAssignment = (CfgAssignmentStatement) current;
+                if (variables.contains(currentAssignment.getVariable())) {
+                    values.put(currentAssignment.getVariable(),
+                            replaceVariables(currentAssignment.getExpression(), values));
+                }
+            }
+            if (current == end) {
+                break;
+            }
+            if (current.hasLoop()) {
+                current = buildByLoopControlFlow(current, current.getLoopId());
+            } else {
+                current = current.getOutgoingEdges().get(0).getDestination();
+            }
+        }
+        return values.get(variable);
+    }
+
+    public RegexNode buildRegularExpression(CfgStatement start, CfgStatement statement, List<CfgStatement> topOrdering) {
         if (statement instanceof CfgAssignmentStatement) {
-            Set<RegexVariable> variables = findUsedVariables((CfgAssignmentStatement) statement, topOrdering);
-            Map<RegexVariable, RegexNode> values = new HashMap<RegexVariable, RegexNode>();
+            variables = findUsedVariables((CfgAssignmentStatement) statement, topOrdering);
             for (RegexVariable variable : variables) {
                 values.put(variable, new RegexEmpty());
             }
-            for (CfgStatement node : topOrdering) {
-                if (node instanceof CfgAssignmentStatement) {
-                    CfgAssignmentStatement assignmentStatement = (CfgAssignmentStatement) node;
-                    if (variables.contains(assignmentStatement.getVariable())) {
-                        values.put(assignmentStatement.getVariable(), replaceVariables(assignmentStatement.getExpression(), values));
-                    }
-                    if (node == statement) {
-                        return values.get(((CfgAssignmentStatement) statement).getVariable());
-                    }
-                }
-            }
+            return buildByLinearControlFlow(start, statement, ((CfgAssignmentStatement) statement).getVariable());
         }
         return new RegexEmpty();
     }

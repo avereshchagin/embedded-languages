@@ -43,6 +43,29 @@ public class DepthFirstSearcher {
         }
     }
 
+    public void markLoops(ControlFlowGraph controlFlowGraph) {
+        for (CfgEdge edge : controlFlowGraph.getEdges()) {
+            CfgStatement u = edge.getDestination();
+            CfgStatement v = edge.getSource();
+            if (u.isVisited() && v.isVisited() && CfgEdge.Type.BACK.equals(edge.getType())) {
+                CfgStatement currentNode = u;
+                currentNode.addLoop(System.identityHashCode(edge));
+                do {
+                    for (CfgEdge out : currentNode.getOutgoingEdges()) {
+                        if (!CfgEdge.Type.BACK.equals(out.getType())) {
+                            CfgStatement outNode = out.getDestination();
+                            if (outNode.isVisited()) {
+                                currentNode = outNode;
+                                break;
+                            }
+                        }
+                    }
+                    currentNode.addLoop(System.identityHashCode(edge));
+                } while (currentNode != v);
+            }
+        }
+    }
+
     public List<CfgStatement> getTopOrdering() {
         return topOrdering;
     }

@@ -1,0 +1,13 @@
+node CfgRootStatement 1
+node CfgAssignmentStatement 2
+node CfgStatement 3
+node CfgAssignmentStatement 4
+node CfgAssignmentStatement 5
+node CfgReturnStatement 6
+node CfgStatement ignored
+edge 1 2
+edge 2 3
+edge 3 4
+edge 3 5
+edge 4 6
+edge 5 6

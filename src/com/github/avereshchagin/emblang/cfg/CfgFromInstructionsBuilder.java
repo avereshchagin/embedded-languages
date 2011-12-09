@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.PrintStream;
 import java.util.*;
 
-public class ControlFlowGraphBuilder {
+public class CfgFromInstructionsBuilder implements CfgBuilder {
 
     private final ControlFlowGraph cfg = new ControlFlowGraph();
 
@@ -16,11 +16,11 @@ public class ControlFlowGraphBuilder {
 
     private Instruction previousInstruction = null;
 
-    public ControlFlowGraphBuilder(ControlFlow controlFlow) {
+    private CfgFromInstructionsBuilder(ControlFlow controlFlow) {
         this.controlFlow = controlFlow;
     }
 
-    public Instruction skipEmptyInstructions(Iterator<Instruction> it) {
+    private Instruction skipEmptyInstructions(Iterator<Instruction> it) {
         Instruction result = null;
         while (it.hasNext()) {
             result = it.next();
@@ -43,7 +43,7 @@ public class ControlFlowGraphBuilder {
         return result;
     }
 
-    public Instruction getNextInstruction(Instruction start) {
+    private Instruction getNextInstruction(Instruction start) {
         Instruction result = null;
         final List<Instruction> instructions = controlFlow.getInstructions();
         final List<ListIterator<Instruction>> it = new ArrayList<ListIterator<Instruction>>();
@@ -75,8 +75,8 @@ public class ControlFlowGraphBuilder {
         return result;
     }
 
-    public static ControlFlowGraphBuilder fromControlFlow(ControlFlow controlFlow) {
-        final ControlFlowGraphBuilder builder = new ControlFlowGraphBuilder(controlFlow);
+    public static CfgFromInstructionsBuilder fromControlFlow(ControlFlow controlFlow) {
+        final CfgFromInstructionsBuilder builder = new CfgFromInstructionsBuilder(controlFlow);
         builder.buildGraph();
         return builder;
     }
@@ -87,9 +87,10 @@ public class ControlFlowGraphBuilder {
 
                 @Override
                 public Object visitEntryInstruction(EntryInstruction instruction) {
-                    CfgStatement node = new CfgRootStatement(instruction.getName());
+                    CfgRootStatement node = new CfgRootStatement(instruction.getName());
                     nodes.put(instruction, node);
                     cfg.addNode(node);
+                    cfg.addMethod(node);
                     return null;
                 }
 
@@ -204,7 +205,7 @@ public class ControlFlowGraphBuilder {
         }
     }
 
-    private void printDotGraph(PrintStream out) {
+    public void printDotGraph(PrintStream out) {
         out.println("digraph G {");
         out.println("node [style=filled];");
         for (CfgStatement node : cfg.getNodes()) {

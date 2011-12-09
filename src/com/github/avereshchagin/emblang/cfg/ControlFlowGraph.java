@@ -12,6 +12,8 @@ public class ControlFlowGraph {
 
     private final List<CfgStatement> verifiableMethodCallNodes = new ArrayList<CfgStatement>();
 
+    private final List<CfgRootStatement> methodEntries = new ArrayList<CfgRootStatement>();
+
     public void addNode(CfgStatement node) {
         if (node.isVerificationRequired()) {
             verifiableMethodCallNodes.add(node);
@@ -21,6 +23,14 @@ public class ControlFlowGraph {
 
     public void addEdge(CfgStatement source, CfgStatement destination) {
         edges.add(new CfgEdge(source, destination));
+    }
+
+    public void addMethod(CfgRootStatement methodEntry) {
+        methodEntries.add(methodEntry);
+    }
+
+    public List<CfgRootStatement> getMethodEntries() {
+        return Collections.unmodifiableList(methodEntries);
     }
 
     public List<CfgStatement> getNodes() {

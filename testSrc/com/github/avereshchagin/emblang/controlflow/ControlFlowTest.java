@@ -1,6 +1,5 @@
-package com.github.avereshchagin.emblang.controlflow.tests;
+package com.github.avereshchagin.emblang.controlflow;
 
-import com.github.avereshchagin.emblang.controlflow.*;
 import com.github.avereshchagin.emblang.regex.RegexEmpty;
 import com.github.avereshchagin.emblang.regex.RegexVariable;
 import junit.framework.Assert;

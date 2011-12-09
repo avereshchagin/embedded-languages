@@ -1,14 +1,14 @@
 package com.github.avereshchagin.emblang.cfg;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class CfgStatement {
 
     protected final List<CfgEdge> incomingEdges = new ArrayList<CfgEdge>();
 
     protected final List<CfgEdge> outgoingEdges = new ArrayList<CfgEdge>();
+
+    protected final Set<Integer> loops = new HashSet<Integer>();
 
     protected int enterValue;
 
@@ -74,6 +74,22 @@ public class CfgStatement {
 
     public void setVerificationRequired(boolean verificationRequired) {
         this.verificationRequired = verificationRequired;
+    }
+
+    public void addLoop(int id) {
+        loops.add(id);
+    }
+
+    public boolean hasLoop() {
+        return !loops.isEmpty();
+    }
+
+    public boolean containsLoop(int id) {
+        return loops.contains(id);
+    }
+
+    public int getLoopId() {
+        return loops.iterator().next();
     }
 
     @Override
