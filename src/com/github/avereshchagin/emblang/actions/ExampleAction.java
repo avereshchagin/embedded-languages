@@ -1,10 +1,7 @@
 package com.github.avereshchagin.emblang.actions;
 
-import com.github.avereshchagin.emblang.cfg.CfgFromInstructionsBuilder;
-import com.github.avereshchagin.emblang.cfg.CfgRootStatement;
-import com.github.avereshchagin.emblang.cfg.CfgStatement;
-import com.github.avereshchagin.emblang.cfg.DepthFirstSearcher;
 import com.github.avereshchagin.emblang.controlflow.ControlFlowBuilder;
+import com.github.avereshchagin.emblang.graph.*;
 import com.github.avereshchagin.emblang.regex.RegexNode;
 import com.github.avereshchagin.emblang.regex.RegularExpressionBuilder;
 import com.github.avereshchagin.emblang.verification.JDBCMethodsFinder;
@@ -41,22 +38,18 @@ public class ExampleAction extends AnAction {
             }
         }
         System.out.println(controlFlowBuilder.toString());
-        CfgFromInstructionsBuilder builder = CfgFromInstructionsBuilder.fromControlFlow(controlFlowBuilder.getControlFlow());
 
-        DepthFirstSearcher searcher = new DepthFirstSearcher();
-        searcher.processGraph(builder.getControlFlowGraph());
-        searcher.markLoops(builder.getControlFlowGraph());
-        builder.showGraph();
+        GraphFromControlFlowBuilder builder = new GraphFromControlFlowBuilder(controlFlowBuilder.getControlFlow());
+        Graph<NodeData> graph = builder.getGraph();
+        GraphUtils.showGraph(graph);
 
         RegularExpressionBuilder regularExpressionBuilder = new RegularExpressionBuilder();
 
-        for (CfgStatement statement : builder.getControlFlowGraph().getVerifiableMethodCallNodes()) {
-            CfgRootStatement methodEntry = builder.getControlFlowGraph().getMethodEntries().get(0);
-            RegexNode expression = regularExpressionBuilder.buildRegularExpression(methodEntry, statement, searcher.getTopOrdering());
-            System.out.println(expression.toString());
-//            System.out.println();
-//            System.out.println("Regular expression:");
-//            System.out.println(RegularExpressionBuilder.buildRegularExpression(node).toString());
+        for (Node<NodeData> node : graph.getNodes()) {
+            if (node.getData().isVerificationRequired()) {
+                RegexNode expression = regularExpressionBuilder.buildRegularExpression(graph, node);
+                System.out.println(expression);
+            }
         }
     }
 }

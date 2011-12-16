@@ -1,23 +1,23 @@
-package com.github.avereshchagin.emblang.cfg;
+package com.github.avereshchagin.emblang.graph;
 
 import com.github.avereshchagin.emblang.controlflow.*;
-import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.PrintStream;
 import java.util.*;
 
-public class CfgFromInstructionsBuilder implements CfgBuilder {
+/**
+ * Author: A. Vereshchagin
+ * Date: 16.12.11
+ */
+public class GraphFromControlFlowBuilder implements GraphBuilder {
 
-    private final ControlFlowGraph cfg = new ControlFlowGraph();
-
-    private final Map<Instruction, CfgStatement> nodes = new IdentityHashMap<Instruction, CfgStatement>();
-
+    private final Graph<NodeData> graph = new Graph<NodeData>();
     private final ControlFlow controlFlow;
-
+    private final Map<Instruction, Node<NodeData>> nodes = new IdentityHashMap<Instruction, Node<NodeData>>();
     private Instruction previousInstruction = null;
 
-    private CfgFromInstructionsBuilder(ControlFlow controlFlow) {
+    public GraphFromControlFlowBuilder(ControlFlow controlFlow) {
         this.controlFlow = controlFlow;
+        buildGraph();
     }
 
     private Instruction skipEmptyInstructions(Iterator<Instruction> it) {
@@ -75,39 +75,38 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
         return result;
     }
 
-    public static CfgFromInstructionsBuilder fromControlFlow(ControlFlow controlFlow) {
-        final CfgFromInstructionsBuilder builder = new CfgFromInstructionsBuilder(controlFlow);
-        builder.buildGraph();
-        return builder;
-    }
-
     private void buildGraph() {
         for (Instruction instruction : controlFlow.getInstructions()) {
             instruction.accept(new InstructionVisitor<Object>() {
 
                 @Override
                 public Object visitEntryInstruction(EntryInstruction instruction) {
-                    CfgRootStatement node = new CfgRootStatement(instruction.getName());
+//                    CfgRootStatement node = new CfgRootStatement(instruction.getName());
+                    Node<NodeData> node = new Node<NodeData>();
+                    node.setData(new NodeData(null, null));
                     nodes.put(instruction, node);
-                    cfg.addNode(node);
-                    cfg.addMethod(node);
+                    graph.addNode(node);
+//                    graph.addMethod(node);
                     return null;
                 }
 
                 @Override
                 public Object visitAssignmentInstruction(AssignmentInstruction instruction) {
-                    CfgStatement node = new CfgAssignmentStatement(instruction.getVariable(), instruction.getExpression());
-                    node.setVerificationRequired(instruction.isVerificationRequired());
+                    NodeData nodeData = new NodeData(instruction.getVariable(), instruction.getExpression());
+                    nodeData.setVerificationRequired(instruction.isVerificationRequired());
+                    Node<NodeData> node = new Node<NodeData>();
+                    node.setData(nodeData);
                     nodes.put(instruction, node);
-                    cfg.addNode(node);
+                    graph.addNode(node);
                     return null;
                 }
 
                 @Override
                 public Object visitReturnInstruction(ReturnInstruction instruction) {
-                    CfgStatement node = new CfgReturnStatement();
+                    Node<NodeData> node = new Node<NodeData>();
+                    node.setData(new NodeData(null, null));
                     nodes.put(instruction, node);
-                    cfg.addNode(node);
+                    graph.addNode(node);
                     return null;
                 }
 
@@ -123,9 +122,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
 
                 @Override
                 public Object visitInstruction(Instruction instruction) {
-                    CfgStatement node = new CfgStatement();
+                    Node<NodeData> node = new Node<NodeData>();
+                    node.setData(new NodeData(null, null));
                     nodes.put(instruction, node);
-                    cfg.addNode(node);
+                    graph.addNode(node);
                     return null;
                 }
             });
@@ -139,10 +139,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
                 @Override
                 public Object visitJumpInstruction(JumpInstruction instruction) {
                     if (previousInstruction != null) {
-                        CfgStatement source = nodes.get(previousInstruction);
-                        CfgStatement destination = nodes.get(getNextInstruction(instruction.getJumpLabel().getTarget()));
+                        Node<NodeData> source = nodes.get(previousInstruction);
+                        Node<NodeData> destination = nodes.get(getNextInstruction(instruction.getJumpLabel().getTarget()));
                         if (source != null && destination != null) {
-                            cfg.addEdge(source, destination);
+                            graph.addEdge(source, destination);
                         }
                         previousInstruction = null;
                     }
@@ -156,10 +156,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
 
                 @Override
                 public Object visitLoopInstruction(LoopInstruction instruction) {
-                    CfgStatement source = nodes.get(instruction);
-                    CfgStatement destination = nodes.get(getNextInstruction(instruction.getBreakLabel().getTarget()));
+                    Node<NodeData> source = nodes.get(instruction);
+                    Node<NodeData> destination = nodes.get(getNextInstruction(instruction.getBreakLabel().getTarget()));
                     if (source != null && destination != null) {
-                        cfg.addEdge(source, destination);
+                        graph.addEdge(source, destination);
                     }
                     visitInstruction(instruction);
                     return null;
@@ -167,10 +167,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
 
                 @Override
                 public Object visitConditionalInstruction(ConditionalInstruction instruction) {
-                    CfgStatement source = nodes.get(instruction);
-                    CfgStatement destination = nodes.get(getNextInstruction(instruction.getFalseLabel().getTarget()));
+                    Node<NodeData> source = nodes.get(instruction);
+                    Node<NodeData> destination = nodes.get(getNextInstruction(instruction.getFalseLabel().getTarget()));
                     if (source != null && destination != null) {
-                        cfg.addEdge(source, destination);
+                        graph.addEdge(source, destination);
                     }
                     visitInstruction(instruction);
                     return null;
@@ -179,10 +179,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
                 @Override
                 public Object visitReturnInstruction(ReturnInstruction instruction) {
                     if (previousInstruction != null) {
-                        CfgStatement source = nodes.get(previousInstruction);
-                        CfgStatement destination = nodes.get(getNextInstruction(instruction));
+                        Node<NodeData> source = nodes.get(previousInstruction);
+                        Node<NodeData> destination = nodes.get(getNextInstruction(instruction));
                         if (source != null && destination != null) {
-                            cfg.addEdge(source, destination);
+                            graph.addEdge(source, destination);
                         }
                     }
                     previousInstruction = null;
@@ -192,10 +192,10 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
                 @Override
                 public Object visitInstruction(Instruction instruction) {
                     if (previousInstruction != null) {
-                        CfgStatement source = nodes.get(previousInstruction);
-                        CfgStatement destination = nodes.get(getNextInstruction(instruction));
+                        Node<NodeData> source = nodes.get(previousInstruction);
+                        Node<NodeData> destination = nodes.get(getNextInstruction(instruction));
                         if (source != null && destination != null) {
-                            cfg.addEdge(source, destination);
+                            graph.addEdge(source, destination);
                         }
                     }
                     previousInstruction = instruction;
@@ -205,45 +205,7 @@ public class CfgFromInstructionsBuilder implements CfgBuilder {
         }
     }
 
-    public void printDotGraph(PrintStream out) {
-        out.println("digraph G {");
-        out.println("node [style=filled];");
-        for (CfgStatement node : cfg.getNodes()) {
-            out.print(System.identityHashCode(node) + " [label=\"" + StringUtil.escapeQuotes(node.toString()) + "\",");
-            if (node instanceof CfgRootStatement || node instanceof CfgReturnStatement) {
-                out.print("color=lightblue");
-            } else if (node.isVerificationRequired()) {
-                out.print("color=red");
-            } else if (!"".equals(node.toString())) {
-                out.print("color=palegreen");
-            } else {
-                out.print("color=gray");
-            }
-            out.println("];");
-        }
-        for (CfgEdge edge : cfg.getEdges()) {
-            out.println(System.identityHashCode(edge.getSource()) + " -> " +
-                    System.identityHashCode(edge.getDestination()) +
-                    (CfgEdge.Type.BACK.equals(edge.getType()) ? " [style=dashed]" : "") + ";");
-        }
-        out.println("}");
-    }
-
-    public void showGraph() {
-        try {
-            Process process = Runtime.getRuntime().exec("/usr/local/bin/dot -Tpng -o/tmp/graph.png");
-            PrintStream out = new PrintStream(process.getOutputStream());
-            printDotGraph(out);
-            out.flush();
-            out.close();
-            process.waitFor();
-            Runtime.getRuntime().exec("open /tmp/graph.png");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public ControlFlowGraph getControlFlowGraph() {
-        return cfg;
+    public Graph<NodeData> getGraph() {
+        return graph;
     }
 }

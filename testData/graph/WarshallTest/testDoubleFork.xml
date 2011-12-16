@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graph>
+    <nodes>
+        <node name="1"/>
+        <node name="2"/>
+        <node name="3"/>
+        <node name="4"/>
+        <node name="5"/>
+        <node name="6"/>
+    </nodes>
+    <edges>
+        <edge source="1" destination="2"/>
+        <edge source="1" destination="3"/>
+        <edge source="3" destination="4"/>
+        <edge source="3" destination="5"/>
+        <edge source="2" destination="6"/>
+        <edge source="4" destination="6"/>
+        <edge source="5" destination="6"/>
+    </edges>
+</graph>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graph>
+    <nodes>
+        <node type="CfgRootStatement" name="1"></node>
+        <node type="CfgAssignmentStatement" name="2"></node>
+        <node type="CfgStatement" name="3"></node>
+        <node type="CfgAssignmentStatement" name="4"></node>
+        <node type="CfgAssignmentStatement" name="5"></node>
+        <node type="CfgReturnStatement" name="6"></node>
+    </nodes>
+    <edges>
+        <edge source="1" destination="2"/>
+        <edge source="2" destination="3"/>
+        <edge source="3" destination="4"/>
+        <edge source="3" destination="5"/>
+        <edge source="4" destination="6"/>
+        <edge source="5" destination="6"/>
+    </edges>
+</graph>
