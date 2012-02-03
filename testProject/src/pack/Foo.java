@@ -14,12 +14,11 @@ public class Foo {
         String from = "FROM";
         String c = b + b;
         if (true) {
-//            if (false) {
-//                sql = a + "1";
-//            } else {
-//                sql = "2";
-//            }
-            sql = a + "bbb";
+            if (false) {
+                sql = a + "1";
+            } else {
+                sql = "2";
+            }
         } else {
             sql = a + "aaa";
         }

@@ -23,12 +23,6 @@ public class GraphBuilder {
         while (it.get(0).hasNext()) {
             result = it.get(0).next();
             boolean shouldBreak = result.accept(new InstructionVisitor<Boolean>() {
-
-                @Override
-                public Boolean visitLabelTargetInstruction(LabelTargetInstruction instruction) {
-                    return false;
-                }
-
                 @Override
                 public Boolean visitJumpInstruction(JumpInstruction instruction) {
                     if (followJumps) {
@@ -63,11 +57,6 @@ public class GraphBuilder {
                 }
 
                 @Override
-                public Void visitLabelTargetInstruction(LabelTargetInstruction instruction) {
-                    return null;
-                }
-
-                @Override
                 public Void visitInstruction(Instruction instruction) {
                     GraphNode node = graph.addNode(instruction);
                     instructionNodeMap.put(instruction, node);
@@ -81,7 +70,6 @@ public class GraphBuilder {
 
         // Connecting nodes
         final Instruction[] previousInstruction = {null};
-//        final ListIterator<Instruction> it = controlFlow.getInstructions().listIterator();
         for (Instruction instruction : controlFlow.getInstructions()) {
             instruction.accept(new InstructionVisitor<Void>() {
 
@@ -116,11 +104,6 @@ public class GraphBuilder {
                         graph.addEdge(source, destination);
                     }
                     previousInstruction[0] = null;
-                    return null;
-                }
-
-                @Override
-                public Void visitLabelTargetInstruction(LabelTargetInstruction instruction) {
                     return null;
                 }
 
