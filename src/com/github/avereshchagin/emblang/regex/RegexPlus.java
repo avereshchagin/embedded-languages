@@ -11,7 +11,10 @@ public class RegexPlus implements RegexNode {
     }
 
     public void connectNode(RegexNode node) {
+    }
 
+    public RegexNode getChildNode() {
+        return node;
     }
 
     public <E> E accept(RegularExpressionVisitor<E> visitor) {

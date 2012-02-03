@@ -14,9 +14,14 @@ public class Foo {
         String from = "FROM";
         String c = b + b;
         if (true) {
-            sql = a;
+//            if (false) {
+//                sql = a + "1";
+//            } else {
+//                sql = "2";
+//            }
+            sql = a + "bbb";
         } else {
-            sql = "aaa";
+            sql = a + "aaa";
         }
         connection.prepareStatement(sql);
     }

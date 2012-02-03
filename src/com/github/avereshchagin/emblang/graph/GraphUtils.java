@@ -13,14 +13,17 @@ public class GraphUtils {
     public static <E> void printDotGraph(Graph<E> graph, PrintStream out) {
         out.println("digraph G {");
         out.println("node [style=filled];");
-        for (Node<E> node : graph.getNodes()) {
-            out.print(System.identityHashCode(node) + " [label=\"" + StringUtil.escapeQuotes(node.toString()) + "\",");
+        for (GraphNode node : graph.getNodes()) {
+            out.print(System.identityHashCode(node) + " [label=\"" + StringUtil.escapeQuotes(
+                    graph.getValue(node).toString()) + "\",");
             out.print("color=gray");
             out.println("];");
         }
-        for (Edge<E> edge : graph.getEdges()) {
-            out.println(System.identityHashCode(edge.getSource()) + " -> " +
-                    System.identityHashCode(edge.getDestination()) + ";");
+        for (GraphNode source : graph.getNodes()) {
+            for (GraphNode destination : graph.getOutNodes(source)) {
+                out.println(System.identityHashCode(source) + " -> " +
+                        System.identityHashCode(destination) + ";");
+            }
         }
         out.println("}");
     }

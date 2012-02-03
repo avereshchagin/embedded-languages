@@ -1,7 +1,13 @@
 package com.github.avereshchagin.emblang.actions;
 
+import com.github.avereshchagin.emblang.controlflow.AssignmentInstruction;
 import com.github.avereshchagin.emblang.controlflow.ControlFlowBuilder;
-import com.github.avereshchagin.emblang.graph.*;
+import com.github.avereshchagin.emblang.controlflow.Instruction;
+import com.github.avereshchagin.emblang.controlflow.InstructionVisitor;
+import com.github.avereshchagin.emblang.graph.Graph;
+import com.github.avereshchagin.emblang.graph.GraphNode;
+import com.github.avereshchagin.emblang.graph.GraphUtils;
+import com.github.avereshchagin.emblang.graph.ReversedGraph;
 import com.github.avereshchagin.emblang.regex.RegexNode;
 import com.github.avereshchagin.emblang.regex.RegularExpressionBuilder;
 import com.github.avereshchagin.emblang.verification.JDBCMethodsFinder;
@@ -39,17 +45,22 @@ public class ExampleAction extends AnAction {
         }
         System.out.println(controlFlowBuilder.toString());
 
-        GraphFromControlFlowBuilder builder = new GraphFromControlFlowBuilder(controlFlowBuilder.getControlFlow());
-        Graph<NodeData> graph = builder.getGraph();
-        GraphUtils.showGraph(graph);
+        final Graph<Instruction> graph = com.github.avereshchagin.emblang.graph.GraphBuilder.buildFromControlFlow(controlFlowBuilder.getControlFlow());
+        final Graph<Instruction> reversedGraph = new ReversedGraph<Instruction>(graph);
+        GraphUtils.showGraph(reversedGraph);
 
-        RegularExpressionBuilder regularExpressionBuilder = new RegularExpressionBuilder();
-
-        for (Node<NodeData> node : graph.getNodes()) {
-            if (node.getData().isVerificationRequired()) {
-                RegexNode expression = regularExpressionBuilder.buildRegularExpression(graph, node);
-                System.out.println(expression);
-            }
+        final RegularExpressionBuilder regularExpressionBuilder = new RegularExpressionBuilder(reversedGraph);
+        for (final GraphNode node : graph.getNodes()) {
+            graph.getValue(node).accept(new InstructionVisitor<Void>() {
+                @Override
+                public Void visitAssignmentInstruction(AssignmentInstruction instruction) {
+                    if (instruction.isVerificationRequired()) {
+                        RegexNode expression = regularExpressionBuilder.processGraphNode(node);
+                        System.out.println(RegularExpressionBuilder.simplifyRegularExpression(expression));
+                    }
+                    return null;
+                }
+            });
         }
     }
 }

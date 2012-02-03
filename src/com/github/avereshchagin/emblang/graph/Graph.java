@@ -1,39 +1,50 @@
 package com.github.avereshchagin.emblang.graph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
- * Author: A. Vereshchagin
- * Date: 15.12.11
+ * Interface for graph.
+ *
+ * @author A. Vereshchagin
  */
-public class Graph<E> {
+public interface Graph<E> {
 
-    private final List<Node<E>> nodes = new ArrayList<Node<E>>();
-    private final List<Edge<E>> edges = new ArrayList<Edge<E>>();
+    /**
+     * Adds new node to graph.
+     *
+     * @param value Value to be associated with new node.
+     * @return Node which was added.
+     */
+    GraphNode addNode(E value);
 
-    public void addNode(Node<E> node) {
-        nodes.add(node);
-    }
+    /**
+     * Adds new directed edge to graph.
+     * If edge is already exists this method does nothing.
+     *
+     * @param source      Source node of new edge.
+     * @param destination Destination node of new edge.
+     */
+    void addEdge(GraphNode source, GraphNode destination);
 
-    public void addEdge(Node<E> source, Node<E> destination) {
-        Edge<E> edge = new Edge<E>(source, destination);
-        source.addOutgoingEdge(edge);
-        destination.addIncomingEdge(edge);
-        edges.add(edge);
-    }
+    /**
+     * Returns value associated with specified node or <code>null</code> if no value is associated.
+     *
+     * @param node Node whose associated value is to be returned.
+     * @return value associated with specified node or <code>null</code> if no value is associated.
+     */
+    E getValue(GraphNode node);
 
-    public List<Node<E>> getNodes() {
-        return Collections.unmodifiableList(nodes);
-    }
+    /**
+     * Associates specified value with specified node.
+     *
+     * @param node  Node with which specified value is to be associated.
+     * @param value Value to be associated with specified node.
+     */
+    void putValue(GraphNode node, E value);
 
-    public List<Edge<E>> getEdges() {
-        return Collections.unmodifiableList(edges);
-    }
+    Set<GraphNode> getNodes();
 
-    @Override
-    public String toString() {
-        return "Nodes: " + nodes.toString() + "; Edges: " + edges.toString();
-    }
+    Set<GraphNode> getOutNodes(GraphNode node);
+
+    Set<GraphNode> getInNodes(GraphNode node);
 }

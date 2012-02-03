@@ -26,9 +26,9 @@ public class RegexVariable implements RegexNode {
         return Collections.singleton(this);
     }
 
-    public String getName() {
-        return name;
-    }
+//    public String getName() {
+//        return name;
+//    }
 
     @Override
     public String toString() {
